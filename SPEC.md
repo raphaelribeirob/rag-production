@@ -8,7 +8,7 @@
 1. Stack is fixed by lead: **Python 3.11 + FastAPI + Postgres 16 with pgvector + Docker / docker-compose**.
 2. Zero spend: local embeddings (`sentence-transformers/all-MiniLM-L6-v2`, 384-dim) and a local/free LLM (Ollama, e.g. `qwen2.5:1.5b`/`llama3.2:3b`), with an optional free-tier hosted LLM selected via env var. A deterministic `extractive` fallback (no LLM) always works, including in CI.
 3. Corpus: a small public, license-clean doc set (e.g. ~50–200 Markdown/PDF pages of open-source docs) committed under `data/corpus/`.
-4. Single-tenant, no auth beyond an optional API key from env.
+4. Single-tenant. **`POST /ingest` requires `API_KEY` (decided 2026-10-22, v1)**: it fails closed (503 if the key is unset, 401 if it is wrong or missing). `/query` and `/health` key use stays optional.
 
 ## Objective
 Build a portfolio-grade RAG API that demonstrates AI-engineering production practices: reproducible ingestion, vector search on pgvector, grounded answers with citations, **automated quality evaluation gated in CI**, per-query latency/cost logging, structured logs/traces, tests, CI, and a free deploy path. Success = a reviewer can `docker compose up`, ask questions, see cited answers, and read an eval report with published numbers — in under 10 minutes, at $0.

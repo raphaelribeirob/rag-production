@@ -1,5 +1,6 @@
 """Runtime settings read from environment variables (see .env.example)."""
 
+import hmac
 import os
 from dataclasses import dataclass
 
@@ -12,6 +13,7 @@ class Settings:
     embedding_model: str
     llm_provider: str
     top_k: int
+    api_key: str = ""
 
 
 def load_settings(env: dict[str, str] | None = None) -> Settings:
@@ -24,4 +26,21 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
         embedding_model=env.get("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2"),
         llm_provider=provider,
         top_k=int(env.get("TOP_K", "5")),
+        api_key=env.get("API_KEY", ""),
     )
+
+
+class IngestAuthError(Exception):
+    """Raised when ingest is not authorized. status 503 = no key configured, 401 = bad key."""
+
+    def __init__(self, status: int, reason: str) -> None:
+        super().__init__(reason)
+        self.status = status
+
+
+def authorize_ingest(settings: Settings, provided: str | None) -> None:
+    """Fail closed: ingest requires a configured API_KEY and a matching provided key."""
+    if not settings.api_key:
+        raise IngestAuthError(503, "ingest disabled: API_KEY not configured")
+    if not provided or not hmac.compare_digest(provided, settings.api_key):
+        raise IngestAuthError(401, "invalid or missing API key")

@@ -25,6 +25,7 @@ CI (`.github/workflows/ci.yml`) runs the same commands. Each one is a blocking g
   judge is offline only. Never lower a threshold to get a pass.
 
 ## Rules
+- `/ingest` must call `config.authorize_ingest`. Never add a bypass or a default key. A missing `API_KEY` must deny.
 - **No secrets** in tracked files, logs or examples. Config comes from env; `.env` is gitignored,
   and `.env.example` holds placeholders only.
 - **No push, no remote repo creation, no deploy, no publishing without Raphael's review.**

@@ -49,7 +49,7 @@ An LLM judge runs only offline, and its score is reported here without gating.
 
 ## Limitations
 - The corpus (FastAPI docs, MIT) has not been ingested yet, so there are no results.
-- Single tenant, API-key auth at most, no UI.
+- Single tenant, no UI. `/ingest` requires `API_KEY` and fails closed when it is unset. Other endpoints have no auth in v1.
 - Small local models: the extractive fallback gives safe but plain answers.
 - Langfuse dashboards are a separate deliverable (due 2026-12-15).
 
