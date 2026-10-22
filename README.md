@@ -1,5 +1,9 @@
 # rag-production
 
+![Status: work in progress](https://img.shields.io/badge/status-work%20in%20progress-orange)
+
+> **Status: work in progress.** All results and metrics are TODO; no numbers have been measured yet.
+
 A production-style RAG API: FastAPI, Postgres + pgvector, local embeddings and
 quality evals gated in CI. Full requirements: [SPEC.md](SPEC.md) (AC1 to AC26).
 
