@@ -23,7 +23,6 @@ CI (`.github/workflows/ci.yml`) runs the same commands. Each one is a blocking g
 - Tests must pass. Never fake eval results: unbuilt sections stay marked TODO.
 - Eval gates (once built): hit@5 >= 0.80, recall@5 >= 0.70, faithfulness >= 0.85 (local NLI). The LLM
   judge is offline only. Never lower a threshold to get a pass.
-- `SPEC.md` is the lead's document and is exempt from the length check (it is still reported).
 
 ## Rules
 - **No secrets** in tracked files, logs or examples. Config comes from env; `.env` is gitignored,

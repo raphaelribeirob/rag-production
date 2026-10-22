@@ -8,7 +8,7 @@ import subprocess
 import sys
 
 EXTS = (".py", ".md", ".toml", ".yml", ".yaml", ".cfg", ".txt", ".jsonl", ".json")
-SKIP = ("SPEC.md",)  # requirements doc owned by the lead; reported, not split
+SKIP: tuple[str, ...] = ()
 
 
 def tracked_files() -> list[str]:
