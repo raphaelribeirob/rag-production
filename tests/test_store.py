@@ -41,3 +41,11 @@ def test_invalid_table_name_rejected():
 
     with pytest.raises(ValueError):
         VectorStore("postgresql://unused", dim=3, table="chunks; DROP TABLE x")
+
+
+def test_sql_injection_payload_is_stored_as_data(store):
+    payload = "x'); DROP TABLE chunks_test; --"
+    store.upsert([(payload, payload, [1.0, 0.0, 0.0])])
+    hit = store.search([1.0, 0.0, 0.0], k=1)[0]
+    assert (hit.chunk_id, hit.text) == (payload, payload)
+    assert store.count() == 1

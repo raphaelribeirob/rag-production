@@ -2,18 +2,18 @@
 
 import hmac
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 VALID_PROVIDERS = ("extractive", "ollama", "hosted_free")
 
 
 @dataclass(frozen=True)
 class Settings:
-    database_url: str
+    database_url: str = field(repr=False)  # may embed a password (e.g. Neon)
     embedding_model: str
     llm_provider: str
     top_k: int
-    api_key: str = ""
+    api_key: str = field(default="", repr=False)
 
 
 def load_settings(env: dict[str, str] | None = None) -> Settings:

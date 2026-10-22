@@ -18,3 +18,9 @@ def test_ingest_rejects_missing_or_wrong_key(provided):
 
 def test_ingest_accepts_matching_key():
     authorize_ingest(load_settings({"API_KEY": "s3cret-test"}), "s3cret-test")
+
+
+def test_settings_repr_does_not_leak_api_key():
+    s = load_settings({"API_KEY": "s3cret-test", "DATABASE_URL": "postgresql://u:pw123@h/db"})
+    assert "s3cret-test" not in repr(s)
+    assert "pw123" not in repr(s)
