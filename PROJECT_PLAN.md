@@ -52,3 +52,8 @@ the gate. It will **not** include a UI, multi-tenancy, paid APIs or Langfuse (th
 ## Open Decisions
 - Decided: corpus = FastAPI docs (MIT). Faithfulness = local NLI gate >= 0.85, with the LLM judge offline only.
 - Open: free deploy path.
+
+## Progress log
+- 2026-10-22: Postgres + pgvector store (psycopg 3), migrate script, docker-compose and CI
+  service container (`pgvector/pgvector:pg16`), Neon deploy notes in README. Next: embeddings +
+  ingest into the store, then `/query`.

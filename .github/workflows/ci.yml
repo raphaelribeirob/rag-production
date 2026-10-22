@@ -7,6 +7,23 @@ permissions:
 jobs:
   lint-test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: rag
+          POSTGRES_PASSWORD: rag
+          POSTGRES_DB: rag
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rag -d rag"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://rag:rag@localhost:5432/rag
+      REQUIRE_DB: "1"
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -20,5 +37,7 @@ jobs:
       - name: Lint (blocking)
         run: ruff check .
       - run: ruff format --check .
+      - name: Migrate (pgvector extension, table, HNSW index)
+        run: python tools/migrate.py
       - run: pytest -q
       # TODO: add eval gate job once evals/ runner exists (see evals/README.md)

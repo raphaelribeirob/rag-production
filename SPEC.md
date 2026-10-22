@@ -108,6 +108,8 @@ class LLMProvider(Protocol):
 | M1 | Ingestion + chunking + embeddings into pgvector (HNSW index), idempotency | 1.5 d | Nov 8 |
 | M2 | `/query` retrieval + providers (extractive, Ollama, hosted_free) + citations | 2 d | Nov 14 |
 | M3 | Labeled eval set (≥30 Qs) + eval runner + CI quality gate | 2 d | Nov 20 |
+
+Status (Oct 22, 2026): vector store layer done - `src/rag_production/store.py` (psycopg 3 + pgvector, `vector(384)`, HNSW cosine, idempotent upsert), `tools/migrate.py`, docker-compose `pgvector/pgvector:pg16`, CI pgvector service container. Embedding/ingest pipeline still TODO.
 | M4 | Telemetry hooks: structlog, OTel spans, `query_log`, cost model | 1 d | Nov 24 |
 | M5 | Free-tier deploy option docs + README, baseline report, polish | 1 d | **Nov 30** |
 | M6 (later) | **Langfuse self-hosted integration** (traces, cost/latency dashboards) — separate deliverable | 1.5 d | **Dec 15** |

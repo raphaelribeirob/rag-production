@@ -66,3 +66,24 @@ https://github.com/fastapi/fastapi.
 
 ## Agent docs
 `AGENTS.md` (agent rules), `SECURITY.md` (security review), `HARNESS.md` (agent-harness evaluation). Gates and templates are adapted from vibe-coding-toolkit (Matheus Gomes, MIT, commit 790a895).
+
+## Local Postgres + pgvector
+
+```bash
+docker compose up -d postgres          # pgvector/pgvector:pg16
+cp .env.example .env                   # DATABASE_URL points at the local container
+python tools/migrate.py                # CREATE EXTENSION vector, chunks table, HNSW cosine index
+pytest -q                              # store tests run against the real database
+```
+
+## Deploy on Neon (free tier)
+
+Not performed by this repo; steps for a reviewer who wants a hosted database at $0:
+
+1. Create a free account and a new project at <https://neon.tech> (Postgres 16).
+2. In the Neon SQL editor run `CREATE EXTENSION IF NOT EXISTS vector;`
+   (`tools/migrate.py` also runs it, but enabling it once up front surfaces permission issues early).
+3. Copy the connection string from the dashboard and set it as `DATABASE_URL` in your
+   deployment's secret store (never commit it), keeping `sslmode=require`:
+   `postgresql://USER:PASSWORD@HOST.neon.tech/DBNAME?sslmode=require`
+4. Run `python tools/migrate.py` once against that URL to create the table and HNSW index.

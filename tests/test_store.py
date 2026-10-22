@@ -1,0 +1,43 @@
+import pytest
+
+
+def test_migrate_creates_extension_and_hnsw_index(store):
+    assert store.has_extension()
+    assert store.has_hnsw_index()
+
+
+def test_migrate_is_idempotent(store):
+    store.migrate()
+    assert store.has_hnsw_index()
+
+
+def test_upsert_and_cosine_top_k(store):
+    store.upsert(
+        [
+            ("a", "doc a", [1.0, 0.0, 0.0]),
+            ("b", "doc b", [0.0, 1.0, 0.0]),
+            ("c", "doc c", [0.9, 0.1, 0.0]),
+        ]
+    )
+    hits = store.search([1.0, 0.0, 0.0], k=2)
+    assert [h.chunk_id for h in hits] == ["a", "c"]
+    assert hits[0].score == pytest.approx(1.0)
+
+
+def test_upsert_same_id_is_idempotent(store):
+    store.upsert([("a", "v1", [1.0, 0.0, 0.0])])
+    store.upsert([("a", "v2", [0.0, 1.0, 0.0])])
+    assert store.count() == 1
+    assert store.search([0.0, 1.0, 0.0], k=1)[0].text == "v2"
+
+
+def test_wrong_dimension_rejected(store):
+    with pytest.raises(ValueError):
+        store.upsert([("x", "bad", [1.0, 0.0])])
+
+
+def test_invalid_table_name_rejected():
+    from rag_production.store import VectorStore
+
+    with pytest.raises(ValueError):
+        VectorStore("postgresql://unused", dim=3, table="chunks; DROP TABLE x")
