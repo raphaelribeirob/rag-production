@@ -35,14 +35,27 @@ Diagram: see SPEC.md. TODO: `docker-compose.yml`.
 functions. TODO: API contract tests, ingestion idempotency tests and DB integration tests.
 
 ## Evals
-Hit rate@5, recall@5 and faithfulness on a hand-labeled set. CI gate: hit@5 >= 0.80 and
-recall@5 >= 0.70. **TODO: no eval has run yet.** See [evals/README.md](evals/README.md).
+Hit rate@5, recall@5 and faithfulness on a hand-labeled set built from the FastAPI docs.
+CI gate: hit@5 >= 0.80, recall@5 >= 0.70 and faithfulness >= 0.85. Faithfulness is scored by a
+local NLI cross-encoder (`cross-encoder/nli-deberta-v3-small`), which is free and deterministic.
+An LLM judge runs only offline, and its score is reported here without gating.
+**TODO: no eval has run yet. Both result tables are empty.**
+
+| Metric | CI (NLI) | Offline LLM judge |
+|---|---|---|
+| hit@5 | TODO | n/a |
+| recall@5 | TODO | n/a |
+| faithfulness | TODO | TODO | See [evals/README.md](evals/README.md).
 
 ## Limitations
-- Corpus not chosen yet (TBD). There is no data, so there are no results.
+- The corpus (FastAPI docs, MIT) has not been ingested yet, so there are no results.
 - Single tenant, API-key auth at most, no UI.
 - Small local models: the extractive fallback gives safe but plain answers.
 - Langfuse dashboards are a separate deliverable (due 2026-12-15).
+
+## Attribution
+The corpus is the FastAPI documentation, MIT License, Copyright (c) 2018 Sebastián Ramírez,
+https://github.com/fastapi/fastapi.
 
 ## Key files
 `SPEC.md`, `PROJECT_PLAN.md`, `src/rag_production/`, `evals/`, `.github/workflows/ci.yml`.

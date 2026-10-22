@@ -175,5 +175,6 @@ class LLMProvider(Protocol):
 ## Addendum (2026-10-22, lead review)
 - AC25: README publishes a measured comparison table: BM25 keyword vs. vector vs. hybrid + reranking (hit rate@5, recall@5, faithfulness, p95 latency, cost/query), same eval set.
 - AC26: Dedicated test with questions not answerable from the corpus; API must refuse ("I don't know" + no fabricated citation). Build fails on any fabricated answer in this set.
-- Corpus: FastAPI docs (MIT) proposed by lead; final choice pending Raphael.
+- Corpus: **DECIDED 2026-10-22: FastAPI docs (MIT, https://github.com/fastapi/fastapi).** Resolves open question 1.
+- Faithfulness (AC15): **DECIDED 2026-10-22: CI gate ≥ 0.85, scored by the local NLI cross-encoder (free, deterministic). LLM judge is offline-only and reported in the README, never gating.**
 - Thresholds above approved by lead for v1.

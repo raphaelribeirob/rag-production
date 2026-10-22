@@ -19,7 +19,7 @@ TODO: quote the specific RAG, eval and production requirements from each posting
 
 Product docs / public data:
 - pgvector: https://github.com/pgvector/pgvector
-- Candidate corpus (TBD): FastAPI docs (MIT), https://github.com/fastapi/fastapi
+- Corpus (decided 2026-10-22): FastAPI docs, MIT License (c) 2018 Sebastián Ramírez, https://github.com/fastapi/fastapi
 
 ## Problem
 - **User:** an engineer who maintains a docs assistant.
@@ -28,8 +28,8 @@ Product docs / public data:
 - **Failure modes:** wrong chunk retrieved; answer not supported by the citations; question has
   no answer in the corpus but the system answers anyway; LLM unavailable (falls back to extractive);
   ingest duplicates.
-- **Success check:** CI eval gate hit@5 >= 0.80 and recall@5 >= 0.70 on the labeled set, plus
-  faithfulness reported.
+- **Success check:** CI eval gate hit@5 >= 0.80 and recall@5 >= 0.70 on the labeled set, and faithfulness
+  >= 0.85 (local NLI).
 
 ## Selected Project
 Production-style RAG API as specified in SPEC.md (AC1 to AC26). Due 2026-11-30.
@@ -50,5 +50,5 @@ the gate. It will **not** include a UI, multi-tenancy, paid APIs or Langfuse (th
 - Deployment/demo: docker-compose (local). Free deploy path TBD, no deploy yet.
 
 ## Open Decisions
-- Corpus choice (Raphael).
-- Faithfulness method (LLM judge vs NLI) and whether it gets a gate.
+- Decided: corpus = FastAPI docs (MIT). Faithfulness = local NLI gate >= 0.85, with the LLM judge offline only.
+- Open: free deploy path.

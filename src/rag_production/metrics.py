@@ -15,4 +15,4 @@ def recall_at_k(retrieved: Sequence[str], relevant: set[str], k: int = 5) -> flo
     return len(relevant.intersection(retrieved[:k])) / len(relevant)
 
 
-# TODO: faithfulness scorer (LLM-judge or NLI-based) - not built yet.
+# TODO: faithfulness scorer via local NLI cross-encoder (CI gate >= 0.85) - not built yet.
