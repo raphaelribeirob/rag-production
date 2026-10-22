@@ -2,16 +2,23 @@ name: ci
 on:
   push:
   pull_request:
+permissions:
+  contents: read
 jobs:
   lint-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - run: pip install -e ".[dev]"
-      - run: ruff check .
+      - name: File length gate (350 lines)
+        run: python tools/check_file_length.py
+      - name: Lint (blocking)
+        run: ruff check .
       - run: ruff format --check .
       - run: pytest -q
       # TODO: add eval gate job once evals/ runner exists (see evals/README.md)
