@@ -83,3 +83,13 @@ def test_get_reranker_is_off_by_default():
     from rag_production.retrieval import get_reranker
 
     assert get_reranker(load_settings({})) is None
+
+
+def test_reranker_model_pinned_to_full_hf_revision():
+    import re
+
+    from rag_production.config import RERANKER_REVISION, load_settings
+
+    assert re.fullmatch(r"[0-9a-f]{40}", RERANKER_REVISION)
+    s = load_settings({"RERANKER": "cross-encoder/ms-marco-MiniLM-L6-v2"})
+    assert s.reranker_revision == RERANKER_REVISION
