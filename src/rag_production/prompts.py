@@ -39,6 +39,18 @@ PROMPTS = {
         "Answer in at most 3 plain sentences. Never write code or code blocks.\n\n"
         "Context:\n{numbered_context}\n\nQuestion: {question}\nAnswer:"
     ),
+    "v4": (
+        "Answer the question about FastAPI using ONLY the context below.\n"
+        "Rules:\n"
+        "1. Stay close to the context's own wording; copy its phrases where you can.\n"
+        "2. Do not add facts, code, names, values or steps that are not in the context, even if "
+        "you know them.\n"
+        "3. If the context answers only part of the question, answer that part and stop; do not "
+        "guess the rest.\n"
+        '4. Reply "I don\'t know." only if nothing in the context is relevant to the question.\n'
+        "Answer in at most 3 plain sentences. Never write code or code blocks.\n\n"
+        "Context:\n{context}\n\nQuestion: {question}\nAnswer:"
+    ),
 }
 
 
