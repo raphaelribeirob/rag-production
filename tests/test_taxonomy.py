@@ -99,3 +99,14 @@ def test_agreement_with_hand_labels():
     r = agreement(hand, auto)
     assert r["n"] == 3 and r["agree"] == 2 and r["rate"] == 0.6667
     assert r["confusion"] == {"hallucination->paraphrase": 1}
+
+
+def test_dumps_lines_is_valid_json_with_one_list_item_per_line():
+    import json
+
+    from rag_production.taxonomy import dumps_lines
+
+    obj = {"a": {"x": 1}, "items": [{"id": i, "t": "s\nt"} for i in range(500)], "b": []}
+    text = dumps_lines(obj)
+    assert json.loads(text) == obj
+    assert len(text.splitlines()) <= 500 + 2 * len(obj) + 2

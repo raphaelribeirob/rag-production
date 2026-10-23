@@ -19,7 +19,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from rag_production.eval_runner import answer_record, load_labeled_set  # noqa: E402
 from rag_production.faithfulness import split_sentences  # noqa: E402
-from rag_production.taxonomy import agreement, classify_answer, summarize  # noqa: E402
+from rag_production.taxonomy import (  # noqa: E402
+    agreement,
+    classify_answer,
+    dumps_lines,
+    summarize,
+)
 
 
 def backfill(items: list[dict], labeled: list[dict]) -> list[dict]:
@@ -109,7 +114,7 @@ def main() -> int:
     print(json.dumps({k: v for k, v in report.items() if k != "items"}, indent=2))
     if args.out:
         Path(args.out).parent.mkdir(parents=True, exist_ok=True)
-        Path(args.out).write_text(json.dumps(report, indent=1))
+        Path(args.out).write_text(dumps_lines(report), encoding="utf-8")
     return 0
 
 

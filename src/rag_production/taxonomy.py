@@ -12,6 +12,7 @@ Answer label = worst sentence: hallucination > evasive > paraphrase > justified_
 supported. No scorable sentence = "unscored" (excluded from rates, as in the faithfulness score).
 """
 
+import json
 import re
 from collections import Counter
 from collections.abc import Sequence
@@ -134,3 +135,15 @@ def agreement(hand: dict[str, str], auto: dict[str, str]) -> dict:
     confusion = Counter(f"{hand[k]}->{auto[k]}" for k in keys if hand[k] != auto[k])
     rate = round(agree / len(keys), 4) if keys else None
     return {"n": len(keys), "agree": agree, "rate": rate, "confusion": dict(confusion)}
+
+
+def dumps_lines(obj: dict) -> str:
+    """JSON with one top-level key per line and one list element per line (fits the line cap)."""
+    rows = []
+    for key, val in obj.items():
+        if isinstance(val, list) and val:
+            body = ",\n".join("  " + json.dumps(v, ensure_ascii=False) for v in val)
+            rows.append(f"{json.dumps(key)}: [\n{body}\n]")
+        else:
+            rows.append(f"{json.dumps(key)}: {json.dumps(val, ensure_ascii=False)}")
+    return "{\n" + ",\n".join(rows) + "\n}\n"
