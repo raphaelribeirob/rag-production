@@ -49,3 +49,19 @@ def test_sql_injection_payload_is_stored_as_data(store):
     hit = store.search([1.0, 0.0, 0.0], k=1)[0]
     assert (hit.chunk_id, hit.text) == (payload, payload)
     assert store.count() == 1
+
+
+def test_fresh_instance_can_search_and_upsert_without_migrate(store):
+    """Regression: vector type was only registered in migrate(), so a second instance failed."""
+    import os
+
+    from rag_production.store import VectorStore
+
+    store.upsert([("a", "doc a", [1.0, 0.0, 0.0])])
+    url = os.environ.get("DATABASE_URL", "postgresql://rag:rag@localhost:5432/rag")
+    other = VectorStore(url, dim=3, table="chunks_test")  # no migrate() on this instance
+    try:
+        other.upsert([("b", "doc b", [0.0, 1.0, 0.0])])
+        assert [h.chunk_id for h in other.search([1.0, 0.0, 0.0], k=1)] == ["a"]
+    finally:
+        other.close()

@@ -28,11 +28,18 @@ class VectorStore:
         self._t = sql.Identifier(table)
         self._idx = sql.Identifier(f"{table}_embedding_hnsw")
         self.conn = psycopg.connect(database_url, autocommit=True, connect_timeout=5)
+        self._vector_registered = False
+
+    def _ensure_vector(self) -> None:
+        """Register the pgvector type on this connection (needs the extension to exist)."""
+        if not self._vector_registered:
+            register_vector(self.conn)
+            self._vector_registered = True
 
     def migrate(self) -> None:
         """Create extension, table and HNSW cosine index. Safe to run repeatedly."""
         self.conn.execute("CREATE EXTENSION IF NOT EXISTS vector")
-        register_vector(self.conn)
+        self._ensure_vector()
         self.conn.execute(
             sql.SQL(
                 "CREATE TABLE IF NOT EXISTS {} (id text PRIMARY KEY, text text NOT NULL, "
@@ -53,6 +60,7 @@ class VectorStore:
             "INSERT INTO {} (id, text, embedding) VALUES (%s, %s, %s) "
             "ON CONFLICT (id) DO UPDATE SET text = EXCLUDED.text, embedding = EXCLUDED.embedding"
         ).format(self._t)
+        self._ensure_vector()
         with self.conn.cursor() as cur:
             cur.executemany(q, [(i, t, np.asarray(e, dtype=np.float32)) for i, t, e in rows])
 
@@ -61,6 +69,7 @@ class VectorStore:
             "SELECT id, text, 1 - (embedding <=> %s) AS score FROM {} "
             "ORDER BY embedding <=> %s LIMIT %s"
         ).format(self._t)
+        self._ensure_vector()
         v = np.asarray(query, dtype=np.float32)
         rows = self.conn.execute(q, (v, v, k)).fetchall()
         return [Hit(r[0], r[1], float(r[2])) for r in rows]
