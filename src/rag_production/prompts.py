@@ -51,6 +51,13 @@ PROMPTS = {
         "Answer in at most 3 plain sentences. Never write code or code blocks.\n\n"
         "Context:\n{context}\n\nQuestion: {question}\nAnswer:"
     ),
+    "v5": (
+        "Answer the question using only the context below. Do not add facts, code, names or "
+        "values that are not in the context. If the context answers only part of the question, "
+        "answer that part. If nothing in the context is relevant, say you don't know. Answer in "
+        "at most 3 plain sentences, no code.\n\n"
+        "Context:\n{context}\n\nQuestion: {question}\nAnswer:"
+    ),
 }
 
 
