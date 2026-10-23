@@ -1,0 +1,24 @@
+{
+ "answers": "v1 prompt, Qwen2.5-7B-Instruct Q4_K_M, test set, run 2026-10-22",
+ "sample": "tools/taxonomy_report.py --sample 20 (random.Random(0) over scorable answer ids)",
+ "labeler": "Grok Bot (the agent), blind: labeled before any classifier output existed",
+ "protocol": "Read answer + its top-5 contexts. hallucination = any claim (prose or code) a reader cannot verify from the contexts; evasive = says the context lacks the info although a gold page is in the top-5 (and no hallucination); grounded = every claim verifiable. For agreement, grounded maps to supported if the CI judge scored the answer 1.0, else paraphrase.",
+ "hand": {
+  "m03": "evasive", "m04": "hallucination", "m10": "grounded", "q03": "grounded",
+  "q06": "grounded", "q08": "grounded", "q09": "grounded", "q12": "hallucination",
+  "q14": "hallucination", "q15": "grounded", "q16": "hallucination", "q20": "hallucination",
+  "q21": "grounded", "q22": "grounded", "q23": "grounded", "q28": "grounded",
+  "q29": "hallucination", "q30": "grounded", "q31": "hallucination", "q35": "grounded"
+ },
+ "notes": {
+  "m04": "CORS part grounded; timing the request around call_next is correct FastAPI usage but not in the retrieved context",
+  "q12": "the Decimal chunk was NOT retrieved (top chunk is cut before Decimal); 'floats or strings' is a guess, hedged",
+  "q14": "prose grounded; the code block (read_root, Hello World) is not in the context (judge skips code)",
+  "q16": "invents header.user_agent; the context says declare a user_agent parameter with Header",
+  "q20": "suggests gt 1 / 'gte' and says ge is not mentioned; ge is in the context",
+  "q21": "grounded but off-target: retrieved context is about Enum path params",
+  "q28": "grounded but off-target: answers with response_model_exclude_unset",
+  "q29": "prose grounded; the full code example (Item model) is not in the context",
+  "q31": "connection string, username/password, sqlite:///example.db are not in the context"
+ }
+}

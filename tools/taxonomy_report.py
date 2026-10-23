@@ -95,8 +95,16 @@ def main() -> int:
         "taxonomy": summarize([p["label"] for p in per]),
     }
     if args.hand:
-        hand = json.loads(Path(args.hand).read_text())["labels"]
-        report["hand_agreement"] = agreement(hand, {p["id"]: p["label"] for p in per})
+        hand = json.loads(Path(args.hand).read_text())["hand"]
+        auto = {p["id"]: p["label"] for p in per}
+        score = {p["id"]: p["score"] for p in per}
+        four = {k: v if v != "grounded" else ("supported" if score.get(k) == 1.0 else "paraphrase")
+                for k, v in hand.items()}  # fmt: skip
+        grounded = {"supported": "grounded", "paraphrase": "grounded"}
+        report["hand_agreement"] = {
+            "four_class": agreement(four, auto),
+            "three_class": agreement(hand, {k: grounded.get(v, v) for k, v in auto.items()}),
+        }
     report["items"] = per
     print(json.dumps({k: v for k, v in report.items() if k != "items"}, indent=2))
     if args.out:
