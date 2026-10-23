@@ -4,6 +4,8 @@ import hmac
 import os
 from dataclasses import dataclass, field
 
+from rag_production.prompts import PROMPTS
+
 VALID_PROVIDERS = ("extractive", "mock", "ollama", "llamacpp", "hosted_free")
 
 
@@ -19,6 +21,7 @@ class Settings:
     ollama_model: str = "qwen2.5:7b"
     ollama_url: str = "http://localhost:11434"
     llamacpp_model_path: str = ""
+    llm_prompt: str = "v1"
 
 
 def load_settings(env: dict[str, str] | None = None) -> Settings:
@@ -26,6 +29,9 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
     provider = env.get("LLM_PROVIDER", "extractive")
     if provider not in VALID_PROVIDERS:
         raise ValueError(f"LLM_PROVIDER must be one of {VALID_PROVIDERS}, got {provider!r}")
+    prompt = env.get("LLM_PROMPT", "v1")
+    if prompt not in PROMPTS:
+        raise ValueError(f"LLM_PROMPT must be one of {sorted(PROMPTS)}, got {prompt!r}")
     return Settings(
         database_url=env.get("DATABASE_URL", "postgresql://rag:rag@localhost:5432/rag"),
         embedding_model=env.get("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2"),
@@ -37,6 +43,7 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
         ollama_model=env.get("OLLAMA_MODEL", "qwen2.5:7b"),
         ollama_url=env.get("OLLAMA_BASE_URL", "http://localhost:11434"),
         llamacpp_model_path=env.get("LLAMACPP_MODEL_PATH", ""),
+        llm_prompt=prompt,
     )
 
 

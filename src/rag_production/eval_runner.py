@@ -123,6 +123,21 @@ def answer_for(question: str, texts: list[str], provider) -> tuple[str, str]:
     return provider.generate(question, texts), f"generated ({provider.name})"
 
 
+def answer_record(row: dict, chunk_ids: list[str], texts: list[str], answer: str, ms: float):
+    """Saved per-answer record: ids, retrieved docs (top-5 chunks), gold hit, latency, text."""
+    docs = _docs(chunk_ids)
+    return {
+        "id": row["id"],
+        "question": row["question"],
+        "relevant_doc_ids": row["relevant_doc_ids"],
+        "doc_ids": docs,
+        "gold_retrieved": bool(set(docs) & set(row["relevant_doc_ids"])),
+        "latency_ms": round(ms, 1),
+        "answer": answer,
+        "contexts": texts,
+    }
+
+
 def _faithfulness(labeled, store, embedder, settings, args) -> dict:  # pragma: no cover
     from rag_production.faithfulness import NLIJudge, evaluate_faithfulness
     from rag_production.providers import get_provider
@@ -141,10 +156,12 @@ def _faithfulness(labeled, store, embedder, settings, args) -> dict:  # pragma: 
         t0 = time.perf_counter()
         answer, source = answer_for(row["question"], texts, provider)
         gen_ms.append((time.perf_counter() - t0) * 1000)
-        items.append({"answer": answer, "contexts": texts})
+        items.append(answer_record(row, [h.chunk_id for h in hits], texts, answer, gen_ms[-1]))
     judge = NLIJudge()
     result = evaluate_faithfulness(items, judge)
     result.update({"judge": judge.name, "answer_source": source})
+    if provider is not None and hasattr(provider, "prompt_version"):
+        result["prompt_version"] = provider.prompt_version
     result["answer_latency"] = latency_summary(gen_ms)  # generation only (0 for extractive)
     if args.save_answers:
         Path(args.save_answers).write_text(json.dumps(items, indent=1))

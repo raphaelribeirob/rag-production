@@ -101,3 +101,22 @@ def test_llamacpp_selected_by_settings_and_requires_model_path():
     env = {"LLM_PROVIDER": "llamacpp", "LLAMACPP_MODEL_PATH": "/m/x.gguf"}
     p = get_provider(load_settings(env), llm=FakeLlama())
     assert isinstance(p, LlamaCppProvider)
+
+
+def test_prompt_versions_baseline_frozen_and_selectable():
+    from rag_production.prompts import PROMPTS
+
+    # v1 is the 2026-10-22 baseline (faithfulness 0.647); it must never change
+    assert PROMPTS["v1"].startswith("Answer the question using only the context below. If the")
+    assert "say you don't know. Answer in at most 3 plain sentences, no code." in PROMPTS["v1"]
+    with pytest.raises(ValueError):
+        load_settings({"LLM_PROMPT": "nope"})
+    assert load_settings({}).llm_prompt == "v1"
+    fake = FakeLlama()
+    last = sorted(PROMPTS)[-1]
+    env = {"LLM_PROVIDER": "llamacpp", "LLAMACPP_MODEL_PATH": "/m/x.gguf", "LLM_PROMPT": last}
+    p = get_provider(load_settings(env), llm=fake)
+    p.generate("Q?", CTX)
+    sent = fake.calls[0]["messages"][-1]["content"]
+    assert sent.startswith(PROMPTS[last].split("{context}")[0]) and CTX[1] in sent
+    assert p.prompt_version == last

@@ -77,3 +77,20 @@ def test_latency_summary():
     s = latency_summary([100.0, 200.0, 300.0, 400.0])
     assert s == {"n": 4, "mean_ms": 250.0, "p50_ms": 250.0, "p95_ms": 385.0, "max_ms": 400.0}
     assert latency_summary([]) is None
+
+
+def test_answer_record_keeps_ids_docs_and_latency():
+    from rag_production.eval_runner import answer_record
+
+    row = {"id": "q1", "question": "Q?", "relevant_doc_ids": ["a.md"]}
+    rec = answer_record(row, ["a.md#0", "b.md#3"], ["t0", "t1"], "ans", 12.345)
+    assert rec == {
+        "id": "q1",
+        "question": "Q?",
+        "relevant_doc_ids": ["a.md"],
+        "doc_ids": ["a.md", "b.md"],
+        "gold_retrieved": True,
+        "latency_ms": 12.3,
+        "answer": "ans",
+        "contexts": ["t0", "t1"],
+    }

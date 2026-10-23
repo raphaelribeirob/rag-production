@@ -73,3 +73,18 @@ def test_premise_is_split_into_sentences_summac_style():
     ctx = ["Chunk heading\n\nFastAPI uses type hints. It validates data. Short."]
     r = faithfulness_score("It validates data.", ctx, ExactNLI())
     assert r["score"] == 1.0
+
+
+def test_real_nli_judge_scores_entailment_and_contradiction():
+    pytest.importorskip("sentence_transformers")
+    from rag_production.faithfulness import NLIJudge
+
+    judge = NLIJudge()
+    (ent, con), (ent2, con2) = judge.scores(
+        [
+            ("The parameter is required.", "The parameter is required."),
+            ("The parameter is required.", "The parameter is never required."),
+        ]
+    )
+    assert ent > 0.5 > con and con2 > 0.5 > ent2
+    assert judge.entailment([("a b c", "a b c")])[0] == judge.scores([("a b c", "a b c")])[0][0]

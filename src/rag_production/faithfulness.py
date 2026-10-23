@@ -74,9 +74,10 @@ class NLIJudge:
         self.name = model_name
         self.model = CrossEncoder(model_name, device="cpu")
         labels = {v.lower(): int(k) for k, v in self.model.config.id2label.items()}
-        self._ent = labels["entailment"]
+        self._ent, self._con = labels["entailment"], labels["contradiction"]
 
-    def entailment(self, pairs: Sequence[tuple[str, str]]) -> list[float]:
+    def scores(self, pairs: Sequence[tuple[str, str]]) -> list[tuple[float, float]]:
+        """(P(entailment), P(contradiction)) per (premise, hypothesis) pair."""
         if not pairs:
             return []
         logits = self.model.predict(list(pairs), batch_size=16, convert_to_numpy=True)
@@ -84,8 +85,11 @@ class NLIJudge:
         for row in logits:
             m = max(row)
             exps = [math.exp(x - m) for x in row]
-            out.append(exps[self._ent] / sum(exps))
+            out.append((exps[self._ent] / sum(exps), exps[self._con] / sum(exps)))
         return out
+
+    def entailment(self, pairs: Sequence[tuple[str, str]]) -> list[float]:
+        return [e for e, _ in self.scores(pairs)]
 
 
 def evaluate_faithfulness(

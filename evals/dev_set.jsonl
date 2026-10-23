@@ -1,0 +1,23 @@
+{"id": "d01", "question": "How do I mark a path operation as deprecated in the docs?", "relevant_doc_ids": ["path-operation-configuration.md"], "category": "single"}
+{"id": "d02", "question": "How do I add custom headers to an HTTPException response?", "relevant_doc_ids": ["handling-errors.md"], "category": "single"}
+{"id": "d03", "question": "How do I override the default handler for request validation errors?", "relevant_doc_ids": ["handling-errors.md"], "category": "single"}
+{"id": "d04", "question": "How do I forbid extra query parameters when using a query parameter model?", "relevant_doc_ids": ["query-param-models.md"], "category": "single"}
+{"id": "d05", "question": "How do I restrict a path parameter to predefined values with an Enum?", "relevant_doc_ids": ["path-params.md"], "category": "single"}
+{"id": "d06", "question": "Why must /users/me be declared before /users/{user_id}?", "relevant_doc_ids": ["path-params.md"], "category": "single"}
+{"id": "d07", "question": "How do I validate a query parameter against a regular expression?", "relevant_doc_ids": ["query-params-str-validations.md"], "category": "single"}
+{"id": "d08", "question": "How do I accept several uploaded files in one request?", "relevant_doc_ids": ["request-files.md"], "category": "single"}
+{"id": "d09", "question": "How do I make FastAPI expect a single body parameter inside a JSON key?", "relevant_doc_ids": ["body-multiple-params.md"], "category": "single"}
+{"id": "d10", "question": "How do I change the OpenAPI URL or disable the interactive docs?", "relevant_doc_ids": ["metadata.md"], "category": "single"}
+{"id": "d11", "question": "In what order do multiple middlewares run?", "relevant_doc_ids": ["middleware.md"], "category": "single"}
+{"id": "d12", "question": "How can a client resume a server-sent event stream with Last-Event-ID?", "relevant_doc_ids": ["server-sent-events.md"], "category": "single"}
+{"id": "d13", "question": "How do I stream JSON Lines from an endpoint?", "relevant_doc_ids": ["stream-json-lines.md"], "category": "single"}
+{"id": "d14", "question": "How do I serve a single-page frontend that uses client-side routing?", "relevant_doc_ids": ["frontend.md"], "category": "single"}
+{"id": "d15", "question": "How do I set the description of the response in a path operation?", "relevant_doc_ids": ["path-operation-configuration.md"], "category": "single"}
+{"id": "d16", "question": "How do I show several named examples in the docs with openapi_examples?", "relevant_doc_ids": ["schema-extra-example.md"], "category": "single"}
+{"id": "d17", "question": "How do I receive a header that can appear multiple times?", "relevant_doc_ids": ["header-params.md"], "category": "single"}
+{"id": "d18", "question": "How do I stop FastAPI from converting underscores to hyphens in headers?", "relevant_doc_ids": ["header-params.md", "header-param-models.md"], "category": "single"}
+{"id": "d19", "question": "How do I create the database tables when the application starts with SQLModel?", "relevant_doc_ids": ["sql-databases.md"], "category": "single"}
+{"id": "d20", "question": "What should I use instead of BackgroundTasks for heavy background computation?", "relevant_doc_ids": ["background-tasks.md"], "category": "single"}
+{"id": "d21", "question": "How do I declare a response that is a list of models?", "relevant_doc_ids": ["extra-models.md"], "category": "single"}
+{"id": "d22", "question": "How can I use named constants from fastapi.status instead of remembering numeric status codes?", "relevant_doc_ids": ["response-status-code.md"], "category": "single"}
+{"id": "d23", "question": "How do I declare a boolean form field?", "relevant_doc_ids": ["request-forms.md"], "category": "single"}

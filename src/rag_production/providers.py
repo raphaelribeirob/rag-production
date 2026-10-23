@@ -15,13 +15,10 @@ from typing import Protocol
 from urllib.parse import urlparse
 
 from rag_production.faithfulness import split_sentences
+from rag_production.prompts import PROMPTS
 
 LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1"}
-PROMPT = (
-    "Answer the question using only the context below. If the context does not contain the "
-    "answer, say you don't know. Answer in at most 3 plain sentences, no code.\n\n"
-    "Context:\n{context}\n\nQuestion: {question}\nAnswer:"
-)
+PROMPT = PROMPTS["v1"]
 
 
 class LLMProvider(Protocol):
@@ -89,7 +86,10 @@ class LlamaCppProvider:
 
     cost_usd = 0.0
 
-    def __init__(self, model_path: str, n_ctx: int = 4096, max_tokens: int = 200, llm=None):
+    def __init__(
+        self, model_path: str, n_ctx=4096, max_tokens=200, llm=None, prompt_version: str = "v1"
+    ):
+        self.prompt_version, self._prompt = prompt_version, PROMPTS[prompt_version]
         base = re.sub(r"(-\d{5}-of-\d{5})?\.gguf$", "", os.path.basename(model_path))
         self.name = f"llamacpp:{base}"
         self.max_tokens = max_tokens
@@ -100,7 +100,7 @@ class LlamaCppProvider:
         self._llm = llm
 
     def generate(self, question: str, contexts: Sequence[str]) -> str:
-        prompt = PROMPT.format(context="\n\n---\n\n".join(contexts), question=question)
+        prompt = self._prompt.format(context="\n\n---\n\n".join(contexts), question=question)
         out = self._llm.create_chat_completion(
             messages=[{"role": "user", "content": prompt}],
             temperature=0,
@@ -120,5 +120,7 @@ def get_provider(settings, llm=None) -> LLMProvider | None:
     if settings.llm_provider == "llamacpp":
         if not settings.llamacpp_model_path:
             raise ValueError("LLM_PROVIDER=llamacpp needs LLAMACPP_MODEL_PATH (a local .gguf file)")
-        return LlamaCppProvider(settings.llamacpp_model_path, llm=llm)
+        return LlamaCppProvider(
+            settings.llamacpp_model_path, llm=llm, prompt_version=settings.llm_prompt
+        )
     raise NotImplementedError(f"provider {settings.llm_provider!r} is not implemented")
