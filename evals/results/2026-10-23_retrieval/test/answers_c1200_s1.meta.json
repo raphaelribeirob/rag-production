@@ -1,0 +1,48 @@
+{
+ "config": "c1200",
+ "table": "chunks_eval",
+ "chunks": 442,
+ "chunk_size": 1200,
+ "chunk_overlap": 0,
+ "reranker": null,
+ "reranker_revision": "233902d25c440f23af6f7d6e94d2946bac0bee0a",
+ "rerank_candidates": null,
+ "provider": "llamacpp:qwen2.5-7b-instruct-q4_k_m",
+ "prompt": "v1",
+ "seed": 1,
+ "temperature": 0.3,
+ "labeled": "evals/labeled_set.jsonl",
+ "n": 47,
+ "abstained": 0,
+ "latency": {
+  "embed": {
+   "n": 47,
+   "mean_ms": 17.0,
+   "p50_ms": 11.1,
+   "p95_ms": 33.4,
+   "max_ms": 223.6
+  },
+  "retrieve": {
+   "n": 47,
+   "mean_ms": 2.5,
+   "p50_ms": 2.4,
+   "p95_ms": 2.9,
+   "max_ms": 6.9
+  },
+  "rerank": null,
+  "generate": {
+   "n": 47,
+   "mean_ms": 17914.5,
+   "p50_ms": 16753.1,
+   "p95_ms": 30682.7,
+   "max_ms": 38224.6
+  },
+  "total": {
+   "n": 47,
+   "mean_ms": 17934.0,
+   "p50_ms": 16770.2,
+   "p95_ms": 30716.0,
+   "max_ms": 38237.8
+  }
+ }
+}
