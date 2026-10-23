@@ -1,0 +1,56 @@
+{
+  "n": 23,
+  "k": 5,
+  "hit_at_5": 1.0,
+  "recall_at_5": 1.0,
+  "answerable": {
+    "n": 23,
+    "hit_at_5": 1.0,
+    "recall_at_5": 1.0
+  },
+  "by_category": {
+    "single": {
+      "n": 23,
+      "hit_at_5": 1.0,
+      "recall_at_5": 1.0
+    }
+  },
+  "abstention": {
+    "threshold": 0.4,
+    "unanswerable_n": 0,
+    "unanswerable_abstain_rate": null,
+    "answerable_false_abstain_rate": 0.0,
+    "overall_abstain_rate": 0.0
+  },
+  "misses": [],
+  "unanswerable_top_scores": {},
+  "model": "sentence-transformers/all-MiniLM-L6-v2",
+  "corpus": {
+    "documents": 40,
+    "chunks": 442
+  },
+  "gates": {
+    "recall_at_5": 0.7,
+    "hit_at_5": 0.8,
+    "faithfulness": 0.85
+  },
+  "top_k": 5,
+  "faithfulness_eval": {
+    "n": 23,
+    "faithfulness": 0.8333,
+    "negative_control": 0.1812,
+    "threshold": 0.5,
+    "judge": "cross-encoder/nli-deberta-v3-small",
+    "answer_source": "generated (llamacpp:qwen2.5-7b-instruct-q4_k_m)",
+    "prompt_version": "v5",
+    "answer_latency": {
+      "n": 23,
+      "mean_ms": 13756.6,
+      "p50_ms": 11752.2,
+      "p95_ms": 26159.1,
+      "max_ms": 29178.2
+    }
+  },
+  "faithfulness": 0.8333,
+  "passed": false
+}
