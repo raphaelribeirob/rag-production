@@ -58,3 +58,14 @@ def test_gate_failures_include_faithfulness_and_missing_metrics():
     assert gate_failures(ok) == []
     assert gate_failures({**ok, "faithfulness": 0.84}) == ["faithfulness"]
     assert gate_failures({**ok, "faithfulness": None}) == ["faithfulness"]
+
+
+def test_faithfulness_answer_is_generated_when_provider_exists_else_extractive():
+    from rag_production.eval_runner import answer_for
+    from rag_production.providers import MockProvider
+
+    texts = ["H\n\nFirst chunk sentence here. More text.", "H2\n\nSecond chunk sentence here."]
+    assert answer_for("q", texts, None) == (texts[0], "extractive (top chunk verbatim)")
+    ans, source = answer_for("q", texts, MockProvider())
+    assert ans == "First chunk sentence here. Second chunk sentence here."
+    assert source == "generated (mock)"

@@ -99,22 +99,33 @@ def gate_failures(report: dict) -> list[str]:
     return [m for m, g in GATES.items() if report.get(m) is None or report[m] < g]
 
 
+def answer_for(question: str, texts: list[str], provider) -> tuple[str, str]:
+    """Generated answer when a provider exists, else the extractive answer (top chunk)."""
+    if provider is None:
+        return texts[0], "extractive (top chunk verbatim)"
+    return provider.generate(question, texts), f"generated ({provider.name})"
+
+
 def _faithfulness(labeled, store, embedder, settings, args) -> dict:  # pragma: no cover
     from rag_production.faithfulness import NLIJudge, evaluate_faithfulness
+    from rag_production.providers import get_provider
 
-    items = []
+    provider = get_provider(settings)
+    items, source = [], "none"
     for row in labeled:
         if not row["relevant_doc_ids"]:
             continue
         hits = store.search(embedder.embed([row["question"]])[0], k=5)
         if not hits or hits[0].score < settings.abstain_threshold:
             continue
-        items.append({"answer": hits[0].text, "contexts": [h.text for h in hits]})
-    if args.faithfulness_limit:
-        items = items[: args.faithfulness_limit]
+        if args.faithfulness_limit and len(items) >= args.faithfulness_limit:
+            break
+        texts = [h.text for h in hits]
+        answer, source = answer_for(row["question"], texts, provider)
+        items.append({"answer": answer, "contexts": texts})
     judge = NLIJudge()
     result = evaluate_faithfulness(items, judge)
-    result.update({"judge": judge.name, "answer_source": "extractive (top chunk verbatim)"})
+    result.update({"judge": judge.name, "answer_source": source})
     return result
 
 

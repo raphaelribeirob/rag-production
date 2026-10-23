@@ -2,8 +2,9 @@
 
 ![Status: work in progress](https://img.shields.io/badge/status-work%20in%20progress-orange)
 
-> **Status: work in progress.** Retrieval pipeline, retrieval eval and NLI faithfulness gate run in
-> CI. Generation (LLM providers) is not built yet, so faithfulness currently scores the extractive answer.
+> **Status: work in progress.** Retrieval, retrieval eval and the NLI faithfulness gate run in CI.
+> Providers: `extractive` (default), deterministic `mock` (used by the CI eval) and local `ollama`
+> (optional, never run in CI, not yet measured). CI faithfulness scores the **mock's** answers.
 
 A production-style RAG API: FastAPI, Postgres + pgvector, local embeddings and
 quality evals gated in CI. Full requirements: [SPEC.md](SPEC.md) (AC1 to AC26).
@@ -32,21 +33,26 @@ curl -X POST localhost:8000/ingest -H "X-API-Key: $API_KEY"   # same shell/env
 curl -X POST localhost:8000/query -H 'content-type: application/json' \
   -d '{"question": "How do I upload a file?", "top_k": 5}'
 ```
-`/query` returns `answer` (best chunk verbatim; extractive, no LLM yet), `citations`
-(`chunk_id`, `doc_id`, `score`), `latency_ms` (`embed`, `retrieve`, `total`), `cost_usd` (0.0:
-local model) and `provider`. TODO: terminal recording.
+`/query` returns `answer`, `answer_source` (`extractive` = best chunk verbatim, or `generated`),
+`abstained`, `citations` (`chunk_id`, `doc_id`, `score`), `latency_ms` (`embed`, `retrieve`,
+`generate` when a provider runs, `total`), `cost_usd` (always 0.0: local only) and `provider`.
+Local generation (optional, $0, no account): install Ollama, `ollama pull qwen2.5:7b`, then start
+the API with `LLM_PROVIDER=ollama`. Only `http://localhost` Ollama URLs are accepted.
+TODO: terminal recording.
 
 ## Architecture
 Ingest (load, heading-aware chunking, sentence-transformers embeddings) -> Postgres/pgvector (HNSW,
 cosine) -> FastAPI `/query` (embed, retrieve top-k, build prompt with citations) -> LLM provider
-chosen by `LLM_PROVIDER`: `ollama` (local), `hosted_free` (optional) or `extractive`
-(no-model fallback, used in CI). Telemetry: structlog JSON, OpenTelemetry spans, `query_log` table.
+chosen by `LLM_PROVIDER` behind a Protocol: `extractive` (no model), `mock` (deterministic, CI)
+or `ollama` (local). `hosted_free` is reserved and raises `NotImplementedError`. Telemetry: structlog JSON, OpenTelemetry spans, `query_log` table.
 Diagram: see SPEC.md. Built so far: chunking, embeddings, pgvector store, `/ingest`, `/query`
-(retrieval + extractive answer). Not built: LLM providers, telemetry, `query_log`.
+(retrieval + extractive or generated answer), providers. Not built: prompt-injection defenses,
+telemetry, `query_log`.
 
 ## Tests
 `pip install -e ".[dev]" && pytest -q` (needs the local Postgres above). Covers chunking,
-embeddings, store, ingest idempotency, API contract (auth, input limits) and the eval runner.
+embeddings, store, ingest idempotency, API contract (auth, input limits), providers (mock,
+Ollama via a fake transport; no network) and the eval runner.
 
 ## Evals
 Hit rate@5, recall@5 and faithfulness on a hand-labeled set built from the FastAPI docs.
@@ -62,14 +68,17 @@ on every push).
 | recall@5 (doc level) | 0.961 (single 0.986, multi 0.889) | >= 0.70 (stretch 0.80) |
 | abstention on 10 unanswerable | 70% (3 near-domain answered wrongly) | reported, not gated |
 | false abstention on answerable | 0% | reported, not gated |
-| faithfulness (45 non-abstained answerable, extractive answer) | 0.993 (negative control 0.055) | >= 0.85 |
+| faithfulness, CI: `mock` generated answers (47) | 1.000 (negative control 0.085) | >= 0.85 |
+| faithfulness, extractive answer (45; CI before providers, run 39877673255) | 0.993 (negative control 0.055) | same gate |
+| faithfulness, Ollama qwen2.5:7b | not measured (Ollama not run yet) | - |
 
 Caveats: questions are hand-written (35 single-page, 12 multi-page, 10 unanswerable) and judged at
 document level against a 40-page corpus. Retrieval questions are still fairly easy; treat the
 numbers as a regression baseline. Abstention is a fixed top-1 cosine threshold (0.40), which is
 crude and misses near-domain questions. Faithfulness is measured on the **extractive** answer (the
 top chunk verbatim), so a high score is expected and only proves the judge works; it becomes
-meaningful once generated answers exist. See [evals/README.md](evals/README.md).
+meaningful once a real model is measured. The mock copies retrieved sentences, so its 1.000 only
+shows the generation path and judge are wired correctly; it says nothing about LLM quality. See [evals/README.md](evals/README.md).
 
 ## Limitations
 - Corpus is 40 FastAPI tutorial pages (MIT); the eval set is small and easy (see Evals).

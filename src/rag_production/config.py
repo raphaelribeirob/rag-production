@@ -4,7 +4,7 @@ import hmac
 import os
 from dataclasses import dataclass, field
 
-VALID_PROVIDERS = ("extractive", "ollama", "hosted_free")
+VALID_PROVIDERS = ("extractive", "mock", "ollama", "hosted_free")
 
 
 @dataclass(frozen=True)
@@ -16,6 +16,8 @@ class Settings:
     api_key: str = field(default="", repr=False)
     corpus_dir: str = "data/corpus"
     abstain_threshold: float = 0.40  # top-1 cosine below this -> abstain
+    ollama_model: str = "qwen2.5:7b"
+    ollama_url: str = "http://localhost:11434"
 
 
 def load_settings(env: dict[str, str] | None = None) -> Settings:
@@ -31,6 +33,8 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
         api_key=env.get("API_KEY", ""),
         corpus_dir=env.get("CORPUS_DIR", "data/corpus"),
         abstain_threshold=float(env.get("ABSTAIN_THRESHOLD", "0.40")),
+        ollama_model=env.get("OLLAMA_MODEL", "qwen2.5:7b"),
+        ollama_url=env.get("OLLAMA_BASE_URL", "http://localhost:11434"),
     )
 
 

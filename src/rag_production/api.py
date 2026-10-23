@@ -1,4 +1,4 @@
-"""FastAPI app: /health, POST /ingest (API key), POST /query (top-k retrieval + cost/latency)."""
+"""FastAPI app: /health, POST /ingest (API key), POST /query (retrieval, answer, cost/latency)."""
 
 import time
 import uuid
@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from rag_production.config import IngestAuthError, Settings, authorize_ingest
 from rag_production.embeddings import Embedder
 from rag_production.ingest import ingest_dir
+from rag_production.providers import LLMProvider, get_provider
 from rag_production.store import VectorStore
 
 MAX_QUESTION_CHARS = 2000
@@ -24,7 +25,12 @@ def _ms(t0: float) -> float:
     return round((time.perf_counter() - t0) * 1000, 3)
 
 
-def create_app(settings: Settings, store: VectorStore, embedder: Embedder) -> FastAPI:
+def create_app(
+    settings: Settings,
+    store: VectorStore,
+    embedder: Embedder,
+    provider: LLMProvider | None = None,
+) -> FastAPI:
     app = FastAPI(title="rag-production")
 
     @app.get("/health")
@@ -53,14 +59,25 @@ def create_app(settings: Settings, store: VectorStore, embedder: Embedder) -> Fa
             for h in hits
         ]
         abstained = not hits or hits[0].score < settings.abstain_threshold
-        answer = "" if abstained else hits[0].text
+        t2 = time.perf_counter()
+        if abstained:
+            answer = ""
+        elif provider is None:
+            answer = hits[0].text  # extractive: best chunk verbatim, no LLM call
+        else:
+            answer = provider.generate(body.question, [h.text for h in hits])
+        latency = {"embed": embed_ms, "retrieve": retrieve_ms}
+        if provider is not None:
+            latency["generate"] = _ms(t2)
+        latency["total"] = _ms(t0)
         return {
-            "answer": answer,  # extractive provider: best chunk verbatim, no LLM call
+            "answer": answer,
             "abstained": abstained,
             "citations": citations,
-            "provider": "extractive",
-            "cost_usd": 0.0,  # local embeddings + extractive answer = $0
-            "latency_ms": {"embed": embed_ms, "retrieve": retrieve_ms, "total": _ms(t0)},
+            "provider": provider.name if provider else "extractive",
+            "answer_source": "generated" if provider else "extractive",
+            "cost_usd": provider.cost_usd if provider else 0.0,  # local only: $0
+            "latency_ms": latency,
             "request_id": str(uuid.uuid4()),
         }
 
@@ -75,4 +92,4 @@ def build_default_app() -> FastAPI:  # pragma: no cover - wiring for `uvicorn --
     embedder = SentenceTransformerEmbedder(settings.embedding_model)
     store = VectorStore(settings.database_url, dim=embedder.dim)
     store.migrate()
-    return create_app(settings, store, embedder)
+    return create_app(settings, store, embedder, provider=get_provider(settings))

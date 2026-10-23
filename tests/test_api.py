@@ -77,3 +77,23 @@ def test_query_answers_above_threshold(client):
     client.post("/ingest", headers={"X-API-Key": KEY})
     body = client.post("/query", json={"question": "upload files"}).json()
     assert body["abstained"] is False and body["answer"]
+
+
+def test_query_uses_configured_provider(store, tmp_path):
+    from rag_production.providers import MockProvider
+
+    (tmp_path / "files.md").write_text("# Files\n\nUpload files with UploadFile.\n")
+    env = {"API_KEY": KEY, "CORPUS_DIR": str(tmp_path), "ABSTAIN_THRESHOLD": "-1"}
+    app = create_app(load_settings(env), store, HashEmbedder(dim=3), provider=MockProvider())
+    c = TestClient(app)
+    c.post("/ingest", headers={"X-API-Key": KEY})
+    body = c.post("/query", json={"question": "upload files"}).json()
+    assert body["provider"] == "mock" and body["answer_source"] == "generated"
+    assert body["answer"] == "Upload files with UploadFile."
+    assert body["cost_usd"] == 0.0 and "generate" in body["latency_ms"]
+
+
+def test_query_without_provider_is_extractive(client):
+    client.post("/ingest", headers={"X-API-Key": KEY})
+    body = client.post("/query", json={"question": "upload files"}).json()
+    assert body["provider"] == "extractive" and body["answer_source"] == "extractive"

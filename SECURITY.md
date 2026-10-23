@@ -32,25 +32,28 @@ LLM = OWASP Top 10 for LLM Applications 2025; A = OWASP Top 10 (2021) for the HT
 | Per-query cost and latency returned (cost visibility; $0 local model) | LLM10 (partial: observability) | `tests/test_api.py::test_ingest_then_query_returns_citations_cost_latency` |
 | Corpus fetched over HTTPS from a pinned 40-char upstream commit, fixed page allow-list | LLM03 Supply Chain; LLM04 Data and Model Poisoning | `tests/test_repo_hardening.py::test_corpus_source_pinned_to_full_commit_and_https` |
 | `/query` abstains (empty answer, `abstained: true`) when top-1 similarity < `ABSTAIN_THRESHOLD` | LLM09 Misinformation (partial: 70% abstention on unanswerable eval set) | `tests/test_api.py::test_query_abstains_below_threshold` |
-| CI eval gate: NLI faithfulness >= 0.85 (sentences entailed by retrieved chunks); a missing score fails the gate | LLM09 Misinformation (partial: currently scores the extractive answer, not LLM output) | `tests/test_eval_runner.py::test_gate_failures_include_faithfulness_and_missing_metrics`, `tests/test_faithfulness.py::test_real_nli_judge_entailment_vs_contradiction` |
+| CI eval gate: NLI faithfulness >= 0.85 (sentences entailed by retrieved chunks); a missing score fails the gate | LLM09 Misinformation (partial: CI scores the deterministic mock's answers, not a real LLM) | `tests/test_eval_runner.py::test_gate_failures_include_faithfulness_and_missing_metrics`, `tests/test_faithfulness.py::test_real_nli_judge_entailment_vs_contradiction` |
+| Ollama provider only talks to `http://localhost` (no data sent to remote hosts, no spend) | LLM02; LLM10 (cost); A10 SSRF (partial: provider URL only) | `tests/test_providers.py::test_ollama_only_talks_to_localhost`, `tests/test_providers.py::test_ollama_settings_from_env_still_localhost_only` |
+| Generation is deterministic and context-only by instruction (temperature 0, seed 0, "only the context" prompt) | LLM09 (partial: instruction, not enforcement) | `tests/test_providers.py::test_ollama_request_is_local_deterministic_and_context_only` |
+| No hosted provider: `hosted_free` raises `NotImplementedError` | LLM10 (cost); A05 | `tests/test_providers.py::test_get_provider_by_setting` |
 | GitHub Actions pinned by full commit SHA | LLM03 Supply Chain; A08 Software and Data Integrity Failures | `tests/test_repo_hardening.py::test_actions_pinned_by_full_sha` |
 | CI token read-only, `persist-credentials: false` | A08; A05 | `tests/test_repo_hardening.py::test_workflow_token_is_read_only` |
 | `.env.example` holds placeholders only | LLM02 Sensitive Information Disclosure; A02 Cryptographic Failures (secret handling) | `tests/test_repo_hardening.py::test_env_example_has_only_placeholder_secrets` |
 | `.env` is gitignored | LLM02 | `tests/test_repo_hardening.py::test_dotenv_is_gitignored` |
 
 ## Not covered yet (no test, so not claimed)
-- LLM01 Prompt Injection (incl. indirect via retrieved docs): generation not built; planned
-  adversarial eval (SPEC AC26-style) and tool-free, cite-only answers.
-- LLM05 Improper Output Handling, LLM07 System Prompt Leakage, LLM09 Misinformation for generated
-  answers (the faithfulness gate only scores extractive answers until LLM providers exist), LLM06 Excessive Agency (design has no
-  tools; nothing to test yet).
+- LLM01 Prompt Injection (incl. indirect via retrieved docs): the Ollama provider puts retrieved
+  chunks into the prompt with no injection defense or test; planned adversarial eval (SPEC AC26).
+- LLM05 Improper Output Handling, LLM07 System Prompt Leakage, LLM09 for real LLM output
+  (Ollama answers are not measured or gated; CI gates the mock only), LLM06 Excessive Agency
+  (design has no tools; nothing to test yet).
 - LLM08 beyond dimension checks: access control per document/tenant, embedding inversion.
 - LLM10 rate limiting, request body size limits at the server, timeouts.
 - A07 brute force / rate limiting on `/ingest`; `/query` and `/health` are unauthenticated by design (v1).
 - Embedding model integrity: weights downloaded from Hugging Face by name, not pinned by revision/hash.
 - A02 TLS to the DB: Neon requires `sslmode=require` (documented in README), not enforced in code.
 - A04 Insecure Design threat model, A06 Vulnerable Components (`pip-audit` not run), A10 SSRF
-  (no outbound fetches yet; Ollama URL is config-controlled).
+  beyond the localhost-only Ollama URL check.
 
 ## Earlier findings
 | ID | Title | Status |
