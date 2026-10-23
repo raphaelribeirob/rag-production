@@ -118,5 +118,14 @@ def test_prompt_versions_baseline_frozen_and_selectable():
     p = get_provider(load_settings(env), llm=fake)
     p.generate("Q?", CTX)
     sent = fake.calls[0]["messages"][-1]["content"]
-    assert sent.startswith(PROMPTS[last].split("{context}")[0]) and CTX[1] in sent
+    assert sent.startswith(PROMPTS[last].split("{")[0]) and CTX[1] in sent
     assert p.prompt_version == last
+
+
+def test_numbered_context_prompts_number_each_passage():
+    from rag_production.prompts import PROMPTS, render
+
+    tpl = "C:\n{numbered_context}\nQ: {question}"
+    out = render(tpl, "why?", ["alpha", "beta"])
+    assert out == "C:\n[1] alpha\n\n[2] beta\nQ: why?"
+    assert render(PROMPTS["v1"], "q", ["a", "b"]).count("\n\n---\n\n") == 1

@@ -15,7 +15,7 @@ from typing import Protocol
 from urllib.parse import urlparse
 
 from rag_production.faithfulness import split_sentences
-from rag_production.prompts import PROMPTS
+from rag_production.prompts import PROMPTS, render
 
 LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1"}
 PROMPT = PROMPTS["v1"]
@@ -100,7 +100,7 @@ class LlamaCppProvider:
         self._llm = llm
 
     def generate(self, question: str, contexts: Sequence[str]) -> str:
-        prompt = self._prompt.format(context="\n\n---\n\n".join(contexts), question=question)
+        prompt = render(self._prompt, question, contexts)
         out = self._llm.create_chat_completion(
             messages=[{"role": "user", "content": prompt}],
             temperature=0,

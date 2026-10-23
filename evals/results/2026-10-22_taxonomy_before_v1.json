@@ -1,0 +1,1444 @@
+{
+ "answers": "reports/answers_llamacpp_qwen2.5-7b.json",
+ "judge": "cross-encoder/nli-deberta-v3-small",
+ "faithfulness": {
+  "n": 46,
+  "faithfulness": 0.6467,
+  "negative_control": 0.1504,
+  "threshold": 0.5
+ },
+ "taxonomy": {
+  "n": 46,
+  "unscored": 1,
+  "counts": {
+   "supported": 21,
+   "hallucination": 21,
+   "evasive": 0,
+   "paraphrase": 4,
+   "justified_refusal": 0
+  },
+  "rates": {
+   "supported": 0.4565,
+   "hallucination": 0.4565,
+   "evasive": 0.0,
+   "paraphrase": 0.087,
+   "justified_refusal": 0.0
+  }
+ },
+ "hand_agreement": {
+  "four_class": {
+   "n": 20,
+   "agree": 13,
+   "rate": 0.65,
+   "confusion": {
+    "evasive->hallucination": 1,
+    "paraphrase->hallucination": 5,
+    "hallucination->supported": 1
+   }
+  },
+  "three_class": {
+   "n": 20,
+   "agree": 13,
+   "rate": 0.65,
+   "confusion": {
+    "evasive->hallucination": 1,
+    "grounded->hallucination": 5,
+    "hallucination->grounded": 1
+   }
+  }
+ },
+ "items": [
+  {
+   "id": "q01",
+   "label": "supported",
+   "score": 1.0,
+   "gold_retrieved": true,
+   "answer": "You can define background tasks to run after returning a response. These tasks are useful for operations that should occur after a request but do not need to block the response from being sent to the client. Examples include sending email notifications or processing data in the background.",
+   "sentences": [
+    {
+     "text": "You can define background tasks to run after returning a response.",
+     "label": "supported",
+     "entail": 0.996,
+     "contra": 0.0004,
+     "overlap": 1.0,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "These tasks are useful for operations that should occur after a request but do not need to block the response from being sent to the client.",
+     "label": "supported",
+     "entail": 0.9843,
+     "contra": 0.001,
+     "overlap": 0.75,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "Examples include sending email notifications or processing data in the background.",
+     "label": "supported",
+     "entail": 0.9975,
+     "contra": 0.0002,
+     "overlap": 0.75,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q02",
+   "label": "supported",
+   "score": 1.0,
+   "gold_retrieved": true,
+   "answer": "To split your application into multiple files using `APIRouter`, you create a separate file for path operations related to specific functionalities (like handling users in `/app/routers/users.py`). Then, you import and use `APIRouter` in your main application to include these path operations, keeping your code organized while still part of the same FastAPI application.",
+   "sentences": [
+    {
+     "text": "To split your application into multiple files using `APIRouter`, you create a separate file for path operations related to specific functionalities (like handling users in `/app/routers/users.py`).",
+     "label": "supported",
+     "entail": 0.9937,
+     "contra": 0.001,
+     "overlap": 0.7647,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "Then, you import and use `APIRouter` in your main application to include these path operations, keeping your code organized while still part of the same FastAPI application.",
+     "label": "supported",
+     "entail": 0.7039,
+     "contra": 0.1155,
+     "overlap": 0.6,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q03",
+   "label": "supported",
+   "score": 1.0,
+   "gold_retrieved": true,
+   "answer": "You can add validation and metadata to fields inside a Pydantic model using Pydantic's `Field`. This allows you to declare extra validations and metadata for model attributes, and you can also use `json_schema_extra` to pass additional JSON Schema metadata.",
+   "sentences": [
+    {
+     "text": "You can add validation and metadata to fields inside a Pydantic model using Pydantic's `Field`.",
+     "label": "supported",
+     "entail": 0.9964,
+     "contra": 0.0006,
+     "overlap": 0.75,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "This allows you to declare extra validations and metadata for model attributes, and you can also use `json_schema_extra` to pass additional JSON Schema metadata.",
+     "label": "supported",
+     "entail": 0.9954,
+     "contra": 0.0003,
+     "overlap": 0.9167,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q04",
+   "label": "supported",
+   "score": 1.0,
+   "gold_retrieved": true,
+   "answer": "To declare multiple body parameters in one path operation, you can simply list them in the body declaration of your path operation function. FastAPI will handle these multiple body parameters and provide the correct data in your function, validating and documenting the correct schema.",
+   "sentences": [
+    {
+     "text": "To declare multiple body parameters in one path operation, you can simply list them in the body declaration of your path operation function.",
+     "label": "supported",
+     "entail": 0.9844,
+     "contra": 0.0015,
+     "overlap": 0.7,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "FastAPI will handle these multiple body parameters and provide the correct data in your function, validating and documenting the correct schema.",
+     "label": "supported",
+     "entail": 0.9831,
+     "contra": 0.0002,
+     "overlap": 0.6923,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q05",
+   "label": "hallucination",
+   "score": 0.3333,
+   "gold_retrieved": true,
+   "answer": "To define nested Pydantic models with lists of submodels, you can declare a list where each element is an instance of another Pydantic model. For example, you might have a `User` model and a `Post` model, and within the `User` model, you can define a list of `Post` models like this: ```python from pydantic import BaseModel class Post(BaseModel): title: str content: str class User(BaseModel): name: str posts: list[Post] ``` Here, `User.posts` is a list of `Post` models, allowing you to nest models within lists.",
+   "sentences": [
+    {
+     "text": "To define nested Pydantic models with lists of submodels, you can declare a list where each element is an instance of another Pydantic model.",
+     "label": "hallucination",
+     "entail": 0.1634,
+     "contra": 0.0614,
+     "overlap": 0.5,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "For example, you might have a `User` model and a `Post` model, and within the `User` model, you can define a list of `Post` models like this:",
+     "label": "supported",
+     "entail": 0.9819,
+     "contra": 0.0036,
+     "overlap": 0.5,
+     "novel_code": [
+      "User",
+      "Post"
+     ],
+     "refusal": false
+    },
+    {
+     "text": "Here, `User.posts` is a list of `Post` models, allowing you to nest models within lists.",
+     "label": "hallucination",
+     "entail": 0.0235,
+     "contra": 0.5905,
+     "overlap": 0.3,
+     "novel_code": [
+      "User.posts",
+      "Post"
+     ],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q06",
+   "label": "supported",
+   "score": 1.0,
+   "gold_retrieved": true,
+   "answer": "To do partial updates with PATCH, you can retrieve the stored data, put it in a Pydantic model, generate a `dict` without default values from the input model using `exclude_unset`, create a copy of the stored model updating its attributes with the received partial updates using the `update` parameter, and then convert the copied model to a format suitable for storage, such as using `jsonable_encoder`, before saving the data to your database.",
+   "sentences": [
+    {
+     "text": "To do partial updates with PATCH, you can retrieve the stored data, put it in a Pydantic model, generate a `dict` without default values from the input model using `exclude_unset`, create a copy of the stored model updating its attributes with the received partial updates using the `update` parameter, and then convert the copied model to a format suitable for storage, such as using `jsonable_encoder`, before saving the data to your database.",
+     "label": "supported",
+     "entail": 0.9333,
+     "contra": 0.0013,
+     "overlap": 0.8125,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q07",
+   "label": "hallucination",
+   "score": 0.5,
+   "gold_retrieved": true,
+   "answer": "To receive a JSON request body using a Pydantic model, you declare a Pydantic model to represent the structure of the request body. Then, you use this model to parse the incoming request body, leveraging Pydantic's validation capabilities to ensure the data conforms to the expected schema.",
+   "sentences": [
+    {
+     "text": "To receive a JSON request body using a Pydantic model, you declare a Pydantic model to represent the structure of the request body.",
+     "label": "supported",
+     "entail": 0.9751,
+     "contra": 0.0022,
+     "overlap": 0.5556,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "Then, you use this model to parse the incoming request body, leveraging Pydantic's validation capabilities to ensure the data conforms to the expected schema.",
+     "label": "hallucination",
+     "entail": 0.0138,
+     "contra": 0.0858,
+     "overlap": 0.4286,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q08",
+   "label": "hallucination",
+   "score": 0.5,
+   "gold_retrieved": true,
+   "answer": "To read cookies in an endpoint, you need to use the `Cookie` parameter type when defining your endpoint. FastAPI will then extract the cookie values from the request.",
+   "sentences": [
+    {
+     "text": "To read cookies in an endpoint, you need to use the `Cookie` parameter type when defining your endpoint.",
+     "label": "supported",
+     "entail": 0.9425,
+     "contra": 0.0029,
+     "overlap": 0.375,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "FastAPI will then extract the cookie values from the request.",
+     "label": "hallucination",
+     "entail": 0.0291,
+     "contra": 0.019,
+     "overlap": 0.6,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q09",
+   "label": "hallucination",
+   "score": 0.5,
+   "gold_retrieved": true,
+   "answer": "To allow requests from a frontend running on another origin, you need to configure the `CORSMiddleware` in your FastAPI application by specifying the allowed origins. This can be done by setting the `allow_origins` parameter to a list containing the origin of your frontend, or using `['*']` to allow requests from any origin.",
+   "sentences": [
+    {
+     "text": "To allow requests from a frontend running on another origin, you need to configure the `CORSMiddleware` in your FastAPI application by specifying the allowed origins.",
+     "label": "supported",
+     "entail": 0.7945,
+     "contra": 0.0165,
+     "overlap": 0.5714,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "This can be done by setting the `allow_origins` parameter to a list containing the origin of your frontend, or using `['*']` to allow requests from any origin.",
+     "label": "hallucination",
+     "entail": 0.3907,
+     "contra": 0.0103,
+     "overlap": 0.5,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q10",
+   "label": "supported",
+   "score": 1.0,
+   "gold_retrieved": true,
+   "answer": "To run your app with a debugger in your editor, such as Visual Studio Code or PyCharm, you can follow the steps provided in the context to set up a debugging configuration specific to Python, which will allow you to start the server, stop at breakpoints, and debug your FastAPI application effectively.",
+   "sentences": [
+    {
+     "text": "To run your app with a debugger in your editor, such as Visual Studio Code or PyCharm, you can follow the steps provided in the context to set up a debugging configuration specific to Python, which will allow you to start the server, stop at breakpoints, and debug your FastAPI application effectively.",
+     "label": "supported",
+     "entail": 0.5616,
+     "contra": 0.0224,
+     "overlap": 0.6538,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q11",
+   "label": "supported",
+   "score": 1.0,
+   "gold_retrieved": true,
+   "answer": "You can use the `jsonable_encoder` function to convert a Pydantic model to a JSON-compatible dict. This function takes a Pydantic model as input and returns a dict where all values are JSON-compatible, converting non-compatible types like datetime objects to string representations in ISO format.",
+   "sentences": [
+    {
+     "text": "You can use the `jsonable_encoder` function to convert a Pydantic model to a JSON-compatible dict.",
+     "label": "supported",
+     "entail": 0.7245,
+     "contra": 0.0095,
+     "overlap": 0.875,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "This function takes a Pydantic model as input and returns a dict where all values are JSON-compatible, converting non-compatible types like datetime objects to string representations in ISO format.",
+     "label": "supported",
+     "entail": 0.9796,
+     "contra": 0.0014,
+     "overlap": 0.6316,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q12",
+   "label": "hallucination",
+   "score": 0.0,
+   "gold_retrieved": true,
+   "answer": "Yes, you can use UUID, datetime, and Decimal types as parameters. UUIDs will be represented as strings, datetimes as strings in ISO 8601 format, and Decimals would typically be represented as floats or strings, though the specific representation isn't detailed in the given context.",
+   "sentences": [
+    {
+     "text": "Yes, you can use UUID, datetime, and Decimal types as parameters.",
+     "label": "hallucination",
+     "entail": 0.0162,
+     "contra": 0.0203,
+     "overlap": 0.5,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "UUIDs will be represented as strings, datetimes as strings in ISO 8601 format, and Decimals would typically be represented as floats or strings, though the specific representation isn't detailed in the given context.",
+     "label": "evasive",
+     "entail": 0.0023,
+     "contra": 0.0048,
+     "overlap": 0.2353,
+     "novel_code": [],
+     "refusal": true
+    }
+   ]
+  },
+  {
+   "id": "q13",
+   "label": "supported",
+   "score": 1.0,
+   "gold_retrieved": true,
+   "answer": "To have separate input and output models where the password is not returned, you should define an input model that includes the plaintext password and an output model that excludes it. FastAPI will then handle the filtering based on the output model, ensuring the password is not included in the response.",
+   "sentences": [
+    {
+     "text": "To have separate input and output models where the password is not returned, you should define an input model that includes the plaintext password and an output model that excludes it.",
+     "label": "supported",
+     "entail": 0.997,
+     "contra": 0.0008,
+     "overlap": 0.5455,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "FastAPI will then handle the filtering based on the output model, ensuring the password is not included in the response.",
+     "label": "supported",
+     "entail": 0.9848,
+     "contra": 0.0043,
+     "overlap": 0.6,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q14",
+   "label": "hallucination",
+   "score": 0.3333,
+   "gold_retrieved": true,
+   "answer": "The simplest FastAPI application involves importing `FastAPI`, creating an `app` instance, defining a path operation function, and running the development server. Here\u2019s a basic example: ```python from fastapi import FastAPI app = FastAPI() @app.get(\"/\") async def read_root(): return {\"message\": \"Hello World\"} ``` To run this application, use the command `fastapi dev` in your terminal.",
+   "sentences": [
+    {
+     "text": "The simplest FastAPI application involves importing `FastAPI`, creating an `app` instance, defining a path operation function, and running the development server.",
+     "label": "hallucination",
+     "entail": 0.0007,
+     "contra": 0.0005,
+     "overlap": 0.5333,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "Here\u2019s a basic example:",
+     "label": "supported",
+     "entail": 0.9837,
+     "contra": 0.0018,
+     "overlap": 0.3333,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "To run this application, use the command `fastapi dev` in your terminal.",
+     "label": "hallucination",
+     "entail": 0.0388,
+     "contra": 0.0006,
+     "overlap": 0.6667,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q15",
+   "label": "supported",
+   "score": 1.0,
+   "gold_retrieved": true,
+   "answer": "To return a 404 error with `HTTPException`, you raise an exception with the status code `404` and a detail message, like this: ```python raise HTTPException(status_code=404, detail=\"Item not found\") ```",
+   "sentences": [
+    {
+     "text": "To return a 404 error with `HTTPException`, you raise an exception with the status code `404` and a detail message, like this:",
+     "label": "supported",
+     "entail": 0.9853,
+     "contra": 0.0017,
+     "overlap": 0.8,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q16",
+   "label": "hallucination",
+   "score": 0.0,
+   "gold_retrieved": true,
+   "answer": "To read a custom request header like `User-Agent`, you can use `header.user_agent` in your FastAPI route handler, and it will be automatically converted from `user_agent` due to the default behavior of converting underscores to hyphens.",
+   "sentences": [
+    {
+     "text": "To read a custom request header like `User-Agent`, you can use `header.user_agent` in your FastAPI route handler, and it will be automatically converted from `user_agent` due to the default behavior of converting underscores to hyphens.",
+     "label": "hallucination",
+     "entail": 0.0373,
+     "contra": 0.0104,
+     "overlap": 0.3889,
+     "novel_code": [
+      "header.user_agent"
+     ],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q17",
+   "label": "supported",
+   "score": 1.0,
+   "gold_retrieved": true,
+   "answer": "To set the title, description, and version of the API docs, you need to define the `title`, `description`, and `version` parameters in your metadata. For example, you can include them as follows: ```python title=\"My API Title\", description=\"A detailed description of the API using Markdown.\", version=\"1.0.0\" ```",
+   "sentences": [
+    {
+     "text": "To set the title, description, and version of the API docs, you need to define the `title`, `description`, and `version` parameters in your metadata.",
+     "label": "supported",
+     "entail": 0.9855,
+     "contra": 0.0009,
+     "overlap": 0.6,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "For example, you can include them as follows:",
+     "label": "supported",
+     "entail": 0.9769,
+     "contra": 0.001,
+     "overlap": 0.3333,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q18",
+   "label": "supported",
+   "score": 1.0,
+   "gold_retrieved": true,
+   "answer": "To add a middleware that measures processing time, you can use the `time.perf_counter()` function to record the start time before the request is processed, and then record the end time after the response is generated but before it is returned. You can then add a custom header to the response containing the processing time.",
+   "sentences": [
+    {
+     "text": "To add a middleware that measures processing time, you can use the `time.perf_counter()` function to record the start time before the request is processed, and then record the end time after the response is generated but before it is returned.",
+     "label": "supported",
+     "entail": 0.951,
+     "contra": 0.0176,
+     "overlap": 0.5294,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "You can then add a custom header to the response containing the processing time.",
+     "label": "supported",
+     "entail": 0.9934,
+     "contra": 0.0019,
+     "overlap": 0.8571,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q19",
+   "label": "paraphrase",
+   "score": 0.5,
+   "gold_retrieved": true,
+   "answer": "To add tags to a path operation, you pass the `tags` parameter with a list of strings to the path operation decorators. For adding a summary, you can use the `summary` parameter similarly when configuring your path operations.",
+   "sentences": [
+    {
+     "text": "To add tags to a path operation, you pass the `tags` parameter with a list of strings to the path operation decorators.",
+     "label": "paraphrase",
+     "entail": 0.0058,
+     "contra": 0.1535,
+     "overlap": 0.7778,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "For adding a summary, you can use the `summary` parameter similarly when configuring your path operations.",
+     "label": "supported",
+     "entail": 0.8921,
+     "contra": 0.0253,
+     "overlap": 0.4286,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q20",
+   "label": "supported",
+   "score": 1.0,
+   "gold_retrieved": true,
+   "answer": "To require a path parameter to be greater than or equal to 1, you would use the `ge` validation, specifying `gte 1` if the context uses `gte` for \"greater than or equal to.\" However, based on the provided context, you would use `gt 1` for greater than and `le` for less than or equal, so `ge 1` is not directly mentioned but implied by the usage of `gt` and `le`.",
+   "sentences": [
+    {
+     "text": "To require a path parameter to be greater than or equal to 1, you would use the `ge` validation, specifying `gte 1` if the context uses `gte` for \"greater than or equal to.\" However, based on the provided context, you would use `gt 1` for greater than and `le` for less than or equal, so `ge 1` is not directly mentioned but implied by the usage of `gt` and `le`.",
+     "label": "supported",
+     "entail": 0.7214,
+     "contra": 0.0302,
+     "overlap": 0.2778,
+     "novel_code": [
+      "gte"
+     ],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q21",
+   "label": "supported",
+   "score": 1.0,
+   "gold_retrieved": true,
+   "answer": "To declare a path parameter with a type, you should use the enum class you created (`ModelName`) for the type annotation of the path parameter. For example, you would create a path parameter like this: `path_parameter: ModelName`.",
+   "sentences": [
+    {
+     "text": "To declare a path parameter with a type, you should use the enum class you created (`ModelName`) for the type annotation of the path parameter.",
+     "label": "supported",
+     "entail": 0.9957,
+     "contra": 0.0005,
+     "overlap": 1.0,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "For example, you would create a path parameter like this: `path_parameter: ModelName`.",
+     "label": "supported",
+     "entail": 0.9764,
+     "contra": 0.0024,
+     "overlap": 0.6667,
+     "novel_code": [
+      "path_parameter"
+     ],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q22",
+   "label": "supported",
+   "score": 1.0,
+   "gold_retrieved": true,
+   "answer": "To use a Pydantic model to group query parameters, you can create a Pydantic model for the related query parameters. This allows you to re-use the model in multiple places and declare validations and metadata for all the parameters at once. This feature is supported since FastAPI version 0.115.0.",
+   "sentences": [
+    {
+     "text": "To use a Pydantic model to group query parameters, you can create a Pydantic model for the related query parameters.",
+     "label": "supported",
+     "entail": 0.9962,
+     "contra": 0.0006,
+     "overlap": 1.0,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "This allows you to re-use the model in multiple places and declare validations and metadata for all the parameters at once.",
+     "label": "supported",
+     "entail": 0.9975,
+     "contra": 0.0004,
+     "overlap": 0.8889,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "This feature is supported since FastAPI version 0.115.0.",
+     "label": "supported",
+     "entail": 0.9671,
+     "contra": 0.0004,
+     "overlap": 0.8333,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q23",
+   "label": "supported",
+   "score": 1.0,
+   "gold_retrieved": true,
+   "answer": "To limit the maximum length of a query string parameter, you can use the `Query` function and set the `max_length` parameter. For example, `q: str | None = Query(default=None, max_length=50)`. This setup ensures that the parameter `q` is optional but, if provided, its length will not exceed 50 characters.",
+   "sentences": [
+    {
+     "text": "To limit the maximum length of a query string parameter, you can use the `Query` function and set the `max_length` parameter.",
+     "label": "supported",
+     "entail": 0.9902,
+     "contra": 0.0005,
+     "overlap": 0.7778,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "For example, `q: str | None = Query(default=None, max_length=50)`.",
+     "label": "supported",
+     "entail": 0.9849,
+     "contra": 0.0035,
+     "overlap": 0.8333,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "This setup ensures that the parameter `q` is optional but, if provided, its length will not exceed 50 characters.",
+     "label": "supported",
+     "entail": 0.9975,
+     "contra": 0.0001,
+     "overlap": 0.625,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q24",
+   "label": "supported",
+   "score": 1.0,
+   "gold_retrieved": true,
+   "answer": "To make a query parameter optional with a default value, you can set its default value to `None` and declare validations or metadata if needed. For example: ```python q: Annotated[str | None, Query(min_length=3)] = None ``` This makes the `q` parameter optional and sets its default value to `\"None\"` if no value is provided in the query.",
+   "sentences": [
+    {
+     "text": "To make a query parameter optional with a default value, you can set its default value to `None` and declare validations or metadata if needed.",
+     "label": "supported",
+     "entail": 0.5354,
+     "contra": 0.4221,
+     "overlap": 0.8333,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "This makes the `q` parameter optional and sets its default value to `\"None\"` if no value is provided in the query.",
+     "label": "supported",
+     "entail": 0.9856,
+     "contra": 0.0002,
+     "overlap": 0.7778,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q25",
+   "label": "hallucination",
+   "score": 0.6667,
+   "gold_retrieved": true,
+   "answer": "To upload a file with `UploadFile`, you can use the `UploadFile` class from the `fastapi` library. You also need to set additional metadata using the `File` function when necessary. Make sure to handle uploaded files as form data since they are sent this way.",
+   "sentences": [
+    {
+     "text": "To upload a file with `UploadFile`, you can use the `UploadFile` class from the `fastapi` library.",
+     "label": "supported",
+     "entail": 0.9265,
+     "contra": 0.0109,
+     "overlap": 0.5,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "You also need to set additional metadata using the `File` function when necessary.",
+     "label": "hallucination",
+     "entail": 0.0734,
+     "contra": 0.3375,
+     "overlap": 0.5714,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "Make sure to handle uploaded files as form data since they are sent this way.",
+     "label": "supported",
+     "entail": 0.9901,
+     "contra": 0.0003,
+     "overlap": 0.5,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q26",
+   "label": "paraphrase",
+   "score": 0.5,
+   "gold_retrieved": true,
+   "answer": "To receive form fields like `username` and `password`, you need to declare a Pydantic model with these fields and then use the `Form` parameter to extract the data from the form data in the request. FastAPI will then provide you with an instance of the Pydantic model you defined, containing the values of the form fields.",
+   "sentences": [
+    {
+     "text": "To receive form fields like `username` and `password`, you need to declare a Pydantic model with these fields and then use the `Form` parameter to extract the data from the form data in the request.",
+     "label": "paraphrase",
+     "entail": 0.0343,
+     "contra": 0.0318,
+     "overlap": 0.7857,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "FastAPI will then provide you with an instance of the Pydantic model you defined, containing the values of the form fields.",
+     "label": "supported",
+     "entail": 0.9975,
+     "contra": 0.0004,
+     "overlap": 0.6,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q27",
+   "label": "supported",
+   "score": 1.0,
+   "gold_retrieved": true,
+   "answer": "To receive files and form data in the same request, you should define both files and form fields at the same time using the `File` and `Form` parameters. First, ensure you have installed `python-multipart`. Then, add the necessary fields in your request definition to handle both file uploads and form data.",
+   "sentences": [
+    {
+     "text": "To receive files and form data in the same request, you should define both files and form fields at the same time using the `File` and `Form` parameters.",
+     "label": "supported",
+     "entail": 0.9918,
+     "contra": 0.0002,
+     "overlap": 0.9,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "First, ensure you have installed `python-multipart`.",
+     "label": "supported",
+     "entail": 0.9898,
+     "contra": 0.0017,
+     "overlap": 0.6,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "Then, add the necessary fields in your request definition to handle both file uploads and form data.",
+     "label": "supported",
+     "entail": 0.8824,
+     "contra": 0.0007,
+     "overlap": 0.6,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q28",
+   "label": "hallucination",
+   "score": 0.5,
+   "gold_retrieved": true,
+   "answer": "To filter the output data with `response_model`, you can use the `response_model_exclude_unset` parameter. This ensures that only the values explicitly set are included in the response, omitting fields with default values that were not actually stored.",
+   "sentences": [
+    {
+     "text": "To filter the output data with `response_model`, you can use the `response_model_exclude_unset` parameter.",
+     "label": "supported",
+     "entail": 0.962,
+     "contra": 0.0055,
+     "overlap": 0.6667,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "This ensures that only the values explicitly set are included in the response, omitting fields with default values that were not actually stored.",
+     "label": "hallucination",
+     "entail": 0.3253,
+     "contra": 0.0733,
+     "overlap": 0.4545,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q29",
+   "label": "hallucination",
+   "score": 0.0,
+   "gold_retrieved": true,
+   "answer": "To return status code 201 when creating an item, you can use the `status_code` parameter in the appropriate path operation decorator, such as `@app.post()`. For example: ```python from fastapi import FastAPI from pydantic import BaseModel app = FastAPI() class Item(BaseModel): name: str description: str = None price: float tax: float = None @app.post(\"/items/\", status_code=201) async def create_item(item: Item): return item ``` This will ensure that the response includes a status code of 201, indicating that a new item has been created.",
+   "sentences": [
+    {
+     "text": "To return status code 201 when creating an item, you can use the `status_code` parameter in the appropriate path operation decorator, such as `@app.post()`.",
+     "label": "hallucination",
+     "entail": 0.107,
+     "contra": 0.0118,
+     "overlap": 0.7143,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "This will ensure that the response includes a status code of 201, indicating that a new item has been created.",
+     "label": "hallucination",
+     "entail": 0.0189,
+     "contra": 0.0066,
+     "overlap": 0.6,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q30",
+   "label": "paraphrase",
+   "score": 0.5,
+   "gold_retrieved": true,
+   "answer": "To add example data to the JSON schema of a model, you can use the `model_config` attribute and set `\"json_schema_extra\"` to a dictionary containing your examples. This extra information will be included in the generated JSON Schema and used in the API documentation.",
+   "sentences": [
+    {
+     "text": "To add example data to the JSON schema of a model, you can use the `model_config` attribute and set `\"json_schema_extra\"` to a dictionary containing your examples.",
+     "label": "paraphrase",
+     "entail": 0.184,
+     "contra": 0.1486,
+     "overlap": 0.9231,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "This extra information will be included in the generated JSON Schema and used in the API documentation.",
+     "label": "supported",
+     "entail": 0.9983,
+     "contra": 0.0002,
+     "overlap": 0.625,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q31",
+   "label": "hallucination",
+   "score": 0.0,
+   "gold_retrieved": true,
+   "answer": "To connect to a SQL database with SQLModel, you would typically use a connection string compatible with SQLAlchemy, which SQLModel builds upon. This connection string specifies the type of database (e.g., SQLite, PostgreSQL) and other necessary details like the database name, username, and password. For example, a connection string for SQLite might look like `sqlite:///example.db`.",
+   "sentences": [
+    {
+     "text": "To connect to a SQL database with SQLModel, you would typically use a connection string compatible with SQLAlchemy, which SQLModel builds upon.",
+     "label": "hallucination",
+     "entail": 0.4575,
+     "contra": 0.0253,
+     "overlap": 0.3636,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "This connection string specifies the type of database (e.g., SQLite, PostgreSQL) and other necessary details like the database name, username, and password.",
+     "label": "hallucination",
+     "entail": 0.0071,
+     "contra": 0.0002,
+     "overlap": 0.25,
+     "novel_code": [
+      "e.g"
+     ],
+     "refusal": false
+    },
+    {
+     "text": "For example, a connection string for SQLite might look like `sqlite:///example.db`.",
+     "label": "hallucination",
+     "entail": 0.0264,
+     "contra": 0.0002,
+     "overlap": 0.4,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q32",
+   "label": "supported",
+   "score": 1.0,
+   "gold_retrieved": true,
+   "answer": "To serve static files from a directory, you can use the `StaticFiles` class. Import `StaticFiles`, and mount a `StaticFiles()` instance in a specific path. This setup allows any path starting with the specified path to be handled by the `StaticFiles` instance for serving static files.",
+   "sentences": [
+    {
+     "text": "To serve static files from a directory, you can use the `StaticFiles` class.",
+     "label": "supported",
+     "entail": 0.9962,
+     "contra": 0.0002,
+     "overlap": 0.8333,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "Import `StaticFiles`, and mount a `StaticFiles()` instance in a specific path.",
+     "label": "supported",
+     "entail": 0.9359,
+     "contra": 0.0056,
+     "overlap": 1.0,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "This setup allows any path starting with the specified path to be handled by the `StaticFiles` instance for serving static files.",
+     "label": "supported",
+     "entail": 0.8166,
+     "contra": 0.0398,
+     "overlap": 0.4545,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q33",
+   "label": "supported",
+   "score": 1.0,
+   "gold_retrieved": true,
+   "answer": "To write tests for your app using `TestClient`, first install `httpx` and import `TestClient`. Then, create a `TestClient` instance by passing your FastAPI application to it. Write test functions named with `test_` (following `pytest` conventions), and use the `TestClient` to make requests to your application, checking responses with standard `assert` statements.",
+   "sentences": [
+    {
+     "text": "To write tests for your app using `TestClient`, first install `httpx` and import `TestClient`.",
+     "label": "supported",
+     "entail": 0.868,
+     "contra": 0.0136,
+     "overlap": 0.75,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "Then, create a `TestClient` instance by passing your FastAPI application to it.",
+     "label": "supported",
+     "entail": 0.9778,
+     "contra": 0.0003,
+     "overlap": 0.8333,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "Write test functions named with `test_` (following `pytest` conventions), and use the `TestClient` to make requests to your application, checking responses with standard `assert` statements.",
+     "label": "supported",
+     "entail": 0.7781,
+     "contra": 0.0451,
+     "overlap": 0.5294,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q34",
+   "label": "hallucination",
+   "score": 0.5,
+   "gold_retrieved": true,
+   "answer": "To stream events to the client using Server-Sent Events (SSE), you send small text blocks with \"fields\" like `data`, `event`, `id`, and `retry`, separated by blank lines. Each event is sent from the server to the client over HTTP, allowing the server to push updates to the client without the client needing to request them.",
+   "sentences": [
+    {
+     "text": "To stream events to the client using Server-Sent Events (SSE), you send small text blocks with \"fields\" like `data`, `event`, `id`, and `retry`, separated by blank lines.",
+     "label": "supported",
+     "entail": 0.8213,
+     "contra": 0.0053,
+     "overlap": 0.8824,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "Each event is sent from the server to the client over HTTP, allowing the server to push updates to the client without the client needing to request them.",
+     "label": "hallucination",
+     "entail": 0.0047,
+     "contra": 0.0015,
+     "overlap": 0.5455,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "q35",
+   "label": "hallucination",
+   "score": 0.5,
+   "gold_retrieved": true,
+   "answer": "To install FastAPI, read the detailed steps in the [Virtual Environments guide](https://tiangolo.com/guides/virtual-environments/). After installation, you can follow the tutorial step by step, starting from importing FastAPI, creating an app instance, writing path operation decorators and functions, and running the development server using `fastapi dev`.",
+   "sentences": [
+    {
+     "text": "To install FastAPI, read the detailed steps in the [Virtual Environments guide](https://tiangolo.com/guides/virtual-environments/).",
+     "label": "supported",
+     "entail": 0.9981,
+     "contra": 0.0004,
+     "overlap": 1.0,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "After installation, you can follow the tutorial step by step, starting from importing FastAPI, creating an app instance, writing path operation decorators and functions, and running the development server using `fastapi dev`.",
+     "label": "hallucination",
+     "entail": 0.1233,
+     "contra": 0.0288,
+     "overlap": 0.45,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "m01",
+   "label": "supported",
+   "score": 1.0,
+   "gold_retrieved": true,
+   "answer": "To validate path parameters with numeric constraints, you can use `ge=1` to ensure the parameter is greater than or equal to 1. For query parameters, you can declare them as required or optional with specific types like `str` or `int`, and set default values if needed. Both path and query parameters can also be validated with `gt` (greater than) and `le` (less than or equal) constraints.",
+   "sentences": [
+    {
+     "text": "To validate path parameters with numeric constraints, you can use `ge=1` to ensure the parameter is greater than or equal to 1.",
+     "label": "supported",
+     "entail": 0.9961,
+     "contra": 0.0004,
+     "overlap": 0.6667,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "For query parameters, you can declare them as required or optional with specific types like `str` or `int`, and set default values if needed.",
+     "label": "supported",
+     "entail": 0.9899,
+     "contra": 0.0008,
+     "overlap": 0.6154,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "Both path and query parameters can also be validated with `gt` (greater than) and `le` (less than or equal) constraints.",
+     "label": "supported",
+     "entail": 0.9908,
+     "contra": 0.0004,
+     "overlap": 0.75,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "m02",
+   "label": "hallucination",
+   "score": 0.25,
+   "gold_retrieved": true,
+   "answer": "To accept an uploaded file together with form fields and return a status code 201, you can define a route in FastAPI that uses both `File` and `Form` to receive the file and form data. You would also need to handle the response to return a 201 status code, indicating the resource was successfully created. Here's a basic example: ```python from fastapi import FastAPI, File, Form, status from fastapi.responses import JSONResponse app = FastAPI() @app.post(\"/uploadfile/\") async def create_upload_file(file: bytes = File(...), name: str = Form(...)): # Process the file and name return JSONResponse(status_code=status.HTTP_201_CREATED, content={\"message\": \"File uploaded and form data received\"}) ``` This example sets up a POST endpoint to handle file uploads and form data, and returns a 201 status code upon successful processing.",
+   "sentences": [
+    {
+     "text": "To accept an uploaded file together with form fields and return a status code 201, you can define a route in FastAPI that uses both `File` and `Form` to receive the file and form data.",
+     "label": "hallucination",
+     "entail": 0.0078,
+     "contra": 0.024,
+     "overlap": 0.4375,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "You would also need to handle the response to return a 201 status code, indicating the resource was successfully created.",
+     "label": "hallucination",
+     "entail": 0.0004,
+     "contra": 0.0011,
+     "overlap": 0.0,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "Here's a basic example:",
+     "label": "supported",
+     "entail": 0.9807,
+     "contra": 0.0028,
+     "overlap": 0.3333,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "This example sets up a POST endpoint to handle file uploads and form data, and returns a 201 status code upon successful processing.",
+     "label": "hallucination",
+     "entail": 0.0006,
+     "contra": 0.0016,
+     "overlap": 0.25,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "m03",
+   "label": "hallucination",
+   "score": 0.0,
+   "gold_retrieved": true,
+   "answer": "To read both cookies and headers from a request, you would typically access the headers and cookies using the respective methods provided by the framework or library you are using. Since the context does not provide specific details on how to do this, the exact implementation would depend on the technology stack you are working with.",
+   "sentences": [
+    {
+     "text": "To read both cookies and headers from a request, you would typically access the headers and cookies using the respective methods provided by the framework or library you are using.",
+     "label": "hallucination",
+     "entail": 0.1427,
+     "contra": 0.0038,
+     "overlap": 0.0909,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "Since the context does not provide specific details on how to do this, the exact implementation would depend on the technology stack you are working with.",
+     "label": "evasive",
+     "entail": 0.0003,
+     "contra": 0.1251,
+     "overlap": 0.0,
+     "novel_code": [],
+     "refusal": true
+    }
+   ]
+  },
+  {
+   "id": "m04",
+   "label": "hallucination",
+   "score": 0.5,
+   "gold_retrieved": true,
+   "answer": "To enable CORS, you would use `CORSMiddleware` from Starlette, ensuring that `allow_credentials` is not set to `True` if `allow_origins`, `allow_methods`, and `allow_headers` include `'*'`. For adding a custom middleware that measures request time, you would create a middleware function using the `@app.middleware(\"http\")` decorator, where you can measure the time before and after calling `call_next`, and then attach the elapsed time to the response or log it.",
+   "sentences": [
+    {
+     "text": "To enable CORS, you would use `CORSMiddleware` from Starlette, ensuring that `allow_credentials` is not set to `True` if `allow_origins`, `allow_methods`, and `allow_headers` include `'*'`.",
+     "label": "supported",
+     "entail": 0.9151,
+     "contra": 0.0147,
+     "overlap": 0.6667,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "For adding a custom middleware that measures request time, you would create a middleware function using the `@app.middleware(\"http\")` decorator, where you can measure the time before and after calling `call_next`, and then attach the elapsed time to the response or log it.",
+     "label": "hallucination",
+     "entail": 0.2437,
+     "contra": 0.5361,
+     "overlap": 0.55,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "m05",
+   "label": "hallucination",
+   "score": 0.0,
+   "gold_retrieved": true,
+   "answer": "I don't know how to define a request body model and a separate response model that hides some fields using only the provided context. The context discusses using Body parameters, handling updates, and restricting header parameters, but it does not provide specific information on defining models with hidden fields for request bodies and responses.",
+   "sentences": [
+    {
+     "text": "I don't know how to define a request body model and a separate response model that hides some fields using only the provided context.",
+     "label": "evasive",
+     "entail": 0.0097,
+     "contra": 0.6759,
+     "overlap": 0.25,
+     "novel_code": [],
+     "refusal": true
+    },
+    {
+     "text": "The context discusses using Body parameters, handling updates, and restricting header parameters, but it does not provide specific information on defining models with hidden fields for request bodies and responses.",
+     "label": "hallucination",
+     "entail": 0.0031,
+     "contra": 0.0728,
+     "overlap": 0.2222,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "m06",
+   "label": "unscored",
+   "score": null,
+   "gold_retrieved": true,
+   "answer": "To raise a custom 404 error, you would typically use `HTTPException` with a status code of 404. For example, you might write `raise HTTPException(status_code=404, detail=\"Item not found\")`. To test that the endpoint returns this error using `TestClient`, you would send a request to the endpoint and assert that the response status code is 404. For instance, you could write test code like this: ```python from fastapi import FastAPI, HTTPException from fastapi.testclient import TestClient app = FastAPI() @app.get(\"/item/{item_id}\") async def read_item(item_id: int): if item_id not in some_items: raise HTTPException(status_code=404, detail=\"Item not found\") client = TestClient(app) def test_read_item(): response = client.get(\"/item/0\") assert response.status_code == 404",
+   "sentences": []
+  },
+  {
+   "id": "m07",
+   "label": "hallucination",
+   "score": 0.25,
+   "gold_retrieved": true,
+   "answer": "To organize routers in multiple files and add tags and API metadata for the docs, you can use `APIRouter` to group related path operations under specific tags. Each `APIRouter` can have its own `tags`, `prefix`, and `responses`. When including the same `APIRouter` multiple times with different prefixes, you can customize these settings for each inclusion without modifying the original `APIRouter`. This approach helps in maintaining cleaner code and better documentation integration.",
+   "sentences": [
+    {
+     "text": "To organize routers in multiple files and add tags and API metadata for the docs, you can use `APIRouter` to group related path operations under specific tags.",
+     "label": "hallucination",
+     "entail": 0.1859,
+     "contra": 0.0097,
+     "overlap": 0.5333,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "Each `APIRouter` can have its own `tags`, `prefix`, and `responses`.",
+     "label": "supported",
+     "entail": 0.854,
+     "contra": 0.0217,
+     "overlap": 0.8,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "When including the same `APIRouter` multiple times with different prefixes, you can customize these settings for each inclusion without modifying the original `APIRouter`.",
+     "label": "hallucination",
+     "entail": 0.0414,
+     "contra": 0.0034,
+     "overlap": 0.3846,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "This approach helps in maintaining cleaner code and better documentation integration.",
+     "label": "hallucination",
+     "entail": 0.0017,
+     "contra": 0.0001,
+     "overlap": 0.125,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "m08",
+   "label": "hallucination",
+   "score": 0.0,
+   "gold_retrieved": true,
+   "answer": "To store items in a SQL database and update them partially with PATCH, you first retrieve the stored item data, then use a Pydantic model to handle the update. You generate a `dict` containing only the updated fields using `exclude_unset=True`, create a copy of the original model with these updates, and then update the database with the modified model's data.",
+   "sentences": [
+    {
+     "text": "To store items in a SQL database and update them partially with PATCH, you first retrieve the stored item data, then use a Pydantic model to handle the update.",
+     "label": "hallucination",
+     "entail": 0.0192,
+     "contra": 0.3634,
+     "overlap": 0.4667,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "You generate a `dict` containing only the updated fields using `exclude_unset=True`, create a copy of the original model with these updates, and then update the database with the modified model's data.",
+     "label": "hallucination",
+     "entail": 0.1392,
+     "contra": 0.0174,
+     "overlap": 0.6471,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "m09",
+   "label": "hallucination",
+   "score": 0.6667,
+   "gold_retrieved": true,
+   "answer": "To use nested models with field validation and add example data to the schema in FastAPI, you define each nested model with its attributes and types. Then, you can include these models as fields in other models. FastAPI will automatically handle validation, provide editor support, and include the example data in the generated API documentation.",
+   "sentences": [
+    {
+     "text": "To use nested models with field validation and add example data to the schema in FastAPI, you define each nested model with its attributes and types.",
+     "label": "supported",
+     "entail": 0.8688,
+     "contra": 0.0102,
+     "overlap": 0.4615,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "Then, you can include these models as fields in other models.",
+     "label": "hallucination",
+     "entail": 0.0358,
+     "contra": 0.0138,
+     "overlap": 0.25,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "FastAPI will automatically handle validation, provide editor support, and include the example data in the generated API documentation.",
+     "label": "supported",
+     "entail": 0.9939,
+     "contra": 0.0002,
+     "overlap": 0.5385,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "m10",
+   "label": "hallucination",
+   "score": 0.5,
+   "gold_retrieved": true,
+   "answer": "To serve static files, you can use FastAPI's `StaticFiles` feature. For streaming Server-Sent Events (SSE) to the browser, FastAPI also provides first-class support, allowing you to stream data from the server to the client over HTTP using the `text/event-stream` format.",
+   "sentences": [
+    {
+     "text": "To serve static files, you can use FastAPI's `StaticFiles` feature.",
+     "label": "hallucination",
+     "entail": 0.178,
+     "contra": 0.0311,
+     "overlap": 0.6667,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "For streaming Server-Sent Events (SSE) to the browser, FastAPI also provides first-class support, allowing you to stream data from the server to the client over HTTP using the `text/event-stream` format.",
+     "label": "supported",
+     "entail": 0.9774,
+     "contra": 0.0012,
+     "overlap": 0.5789,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "m11",
+   "label": "supported",
+   "score": 1.0,
+   "gold_retrieved": true,
+   "answer": "To group query parameters into a Pydantic model, you declare the necessary fields in a Pydantic model and then use the `Query` parameter. Similarly, for header parameters, you declare the required fields in a Pydantic model and use the `Header` parameter. FastAPI will then extract the data for each field from the query parameters or headers and provide you with the defined Pydantic model.",
+   "sentences": [
+    {
+     "text": "To group query parameters into a Pydantic model, you declare the necessary fields in a Pydantic model and then use the `Query` parameter.",
+     "label": "supported",
+     "entail": 0.9948,
+     "contra": 0.0009,
+     "overlap": 0.6667,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "Similarly, for header parameters, you declare the required fields in a Pydantic model and use the `Header` parameter.",
+     "label": "supported",
+     "entail": 0.997,
+     "contra": 0.0006,
+     "overlap": 0.6667,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "FastAPI will then extract the data for each field from the query parameters or headers and provide you with the defined Pydantic model.",
+     "label": "supported",
+     "entail": 0.9973,
+     "contra": 0.0001,
+     "overlap": 0.8182,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  },
+  {
+   "id": "m12",
+   "label": "paraphrase",
+   "score": 0.75,
+   "gold_retrieved": true,
+   "answer": "To send a notification in a background task, you first create a task function (e.g., `write_notification`) that performs the notification task, such as writing to a file. Then, within your path operation function, you pass this task function to the `BackgroundTasks` object using `.add_task()` along with the necessary arguments and keyword arguments. FastAPI will handle running this task in the background. For converting data with `jsonable_encoder`, you can omit the return type in your path operation function, and FastAPI will use `jsonable_encoder` to convert the data before sending it.",
+   "sentences": [
+    {
+     "text": "To send a notification in a background task, you first create a task function (e.g., `write_notification`) that performs the notification task, such as writing to a file.",
+     "label": "supported",
+     "entail": 0.9852,
+     "contra": 0.0014,
+     "overlap": 0.4545,
+     "novel_code": [
+      "e.g"
+     ],
+     "refusal": false
+    },
+    {
+     "text": "Then, within your path operation function, you pass this task function to the `BackgroundTasks` object using `.add_task()` along with the necessary arguments and keyword arguments.",
+     "label": "supported",
+     "entail": 0.9399,
+     "contra": 0.0011,
+     "overlap": 0.6923,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "FastAPI will handle running this task in the background.",
+     "label": "paraphrase",
+     "entail": 0.196,
+     "contra": 0.0329,
+     "overlap": 0.8,
+     "novel_code": [],
+     "refusal": false
+    },
+    {
+     "text": "For converting data with `jsonable_encoder`, you can omit the return type in your path operation function, and FastAPI will use `jsonable_encoder` to convert the data before sending it.",
+     "label": "supported",
+     "entail": 0.9967,
+     "contra": 0.0004,
+     "overlap": 0.5385,
+     "novel_code": [],
+     "refusal": false
+    }
+   ]
+  }
+ ]
+}
