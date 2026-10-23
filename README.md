@@ -97,6 +97,10 @@ shows the generation path and judge are wired correctly; it says nothing about L
 - Single tenant, no UI. `/ingest` requires `API_KEY` and fails closed when it is unset. Other endpoints have no auth in v1.
 - Small local models: the extractive fallback gives safe but plain answers. A local 7B model is
   slow on CPU (about 15 s per answer) and only 0.647 faithful by the NLI judge.
+- The failure-taxonomy classifier agrees with the hand audit on 13/20 answers (0.65). The hand
+  labels were made by an AI agent (Grok Bot), not a human. 47 test questions is a small set, so
+  small gaps (e.g. v5 vs v1, or between NLI judges) are within noise. Larger judges are offline only
+  ([evals/README.md](evals/README.md#larger-nli-judge-offline-comparison-only-2026-10-23-local-cpu)).
 - Langfuse dashboards are a separate deliverable (due 2026-12-15).
 
 ## Attribution

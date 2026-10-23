@@ -184,3 +184,44 @@ PYTHONPATH=src python tools/taxonomy_report.py --rebuild \
   --judge cross-encoder/nli-deberta-v3-small --out reports/rebuild_check_small.json
 ```
 Dev runs use `--labeled evals/dev_set.jsonl` (see `evals/results/dev/DECISION.md`).
+
+## Larger NLI judge, offline comparison only (2026-10-23, local CPU)
+Same answers and contexts as above, re-scored with bigger cross-encoders from Hugging Face. **For
+comparison only: the CI judge (small) and the 0.85 gate do not change, and 0.647 stays the baseline.**
+Revisions: small `fa2804872c3b4bd748f38c0185cc85775361e735`, base
+`6c749ce3425cd33b46d187e45b92bbf96ee12ec7`, large `bab4bc7178836f731dcfd18c06ca9def0a137712`.
+CPU time per 47-answer set: base about 6 min, large about 20 to 30 min (8 vCPU).
+
+| answers (test, 47) | judge | n | faithfulness | neg. control | supported | hallucination | evasive | paraphrase | hand agreement |
+|---|---|---|---|---|---|---|---|---|---|
+| BEFORE v1 (the 0.647 run) | small | 46 | 0.647 | 0.150 | 0.457 | 0.457 | 0.000 | 0.087 | 13/20 (0.65) |
+| | base | 46 | 0.511 | 0.074 | 0.326 | 0.609 | 0.000 | 0.065 | 14/20 (0.70) |
+| | large | 46 | 0.639 | 0.198 | 0.457 | 0.478 | 0.022 | 0.043 | 14/20 (0.70) |
+| v1 control (rebuilt) | small | 47 | 0.588 | 0.099 | 0.383 | 0.468 | 0.021 | 0.128 | - |
+| | base | 47 | 0.489 | 0.069 | 0.277 | 0.638 | 0.000 | 0.085 | - |
+| | large | 47 | 0.598 | 0.180 | 0.404 | 0.468 | 0.043 | 0.085 | - |
+| AFTER v5 (rebuilt) | small | 47 | 0.605 | 0.152 | 0.447 | 0.425 | 0.021 | 0.106 | - |
+| | base | 47 | 0.477 | 0.028 | 0.255 | 0.617 | 0.021 | 0.106 | - |
+| | large | 47 | 0.683 | 0.135 | 0.468 | 0.425 | 0.043 | 0.064 | - |
+
+Justified refusal is 0.000 everywhere. Hand agreement is the 4-class rate against
+`evals/audit/hand_labels_before.json` (3-class is the same). Reading:
+- 0.647 roughly holds under the large judge (0.639) but not under base (0.511). Base is stricter
+  than small, not more lenient, so "the small judge under-credits paraphrase" is not the whole story.
+- Every judge keeps the answers far below 0.85. The negative control stays low (0.03 to 0.20).
+- The judges disagree on v5 vs the v1 control: small +0.017, base -0.012, large +0.085. The ranking
+  depends on the judge, so with 47 questions the prompt difference is not established. Default prompt stays v1.
+- Classifier agreement with the hand audit rises from 13/20 to 14/20 with base or large; it still
+  over-calls hallucination (4 hand-grounded answers labeled hallucination).
+
+Files: `evals/results/2026-10-22_judge_{base,large}_{before_v1,test_v1_rebuilt,after_v5}.json`.
+Commands (`J` = `cross-encoder/nli-deberta-v3-base` or `-large`, `S` = `base` or `large`):
+```bash
+PYTHONPATH=src python tools/taxonomy_report.py --rebuild \
+  --answers evals/results/2026-10-22_taxonomy_before_v1.json --hand evals/audit/hand_labels_before.json \
+  --judge $J --out evals/results/2026-10-22_judge_${S}_before_v1.json
+PYTHONPATH=src python tools/taxonomy_report.py --answers reports/test_answers_v1_rebuilt.json \
+  --judge $J --out evals/results/2026-10-22_judge_${S}_test_v1_rebuilt.json
+PYTHONPATH=src python tools/taxonomy_report.py --answers reports/test_answers_v5.json \
+  --judge $J --out evals/results/2026-10-22_judge_${S}_after_v5.json
+```
