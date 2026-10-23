@@ -1,0 +1,69 @@
+{
+ "config": "c1200",
+ "table": "chunks_eval",
+ "chunks": 442,
+ "chunk_size": 1200,
+ "chunk_overlap": 0,
+ "reranker": null,
+ "reranker_revision": "233902d25c440f23af6f7d6e94d2946bac0bee0a",
+ "rerank_candidates": null,
+ "labeled": "evals/dev_set.jsonl",
+ "standard": {
+  "n": 23,
+  "k": 5,
+  "hit_at_5": 1.0,
+  "recall_at_5": 1.0,
+  "answerable": {
+   "n": 23,
+   "hit_at_5": 1.0,
+   "recall_at_5": 1.0
+  },
+  "by_category": {
+   "single": {
+    "n": 23,
+    "hit_at_5": 1.0,
+    "recall_at_5": 1.0
+   }
+  },
+  "abstention": {
+   "threshold": 0.4,
+   "unanswerable_n": 0,
+   "unanswerable_abstain_rate": null,
+   "answerable_false_abstain_rate": 0.0,
+   "overall_abstain_rate": 0.0
+  },
+  "misses": [],
+  "unanswerable_top_scores": {}
+ },
+ "context_top5_chunks": {
+  "answerable": {
+   "n": 23,
+   "hit_at_5": 1.0,
+   "recall_at_5": 1.0
+  },
+  "by_category": {
+   "single": {
+    "n": 23,
+    "hit_at_5": 1.0,
+    "recall_at_5": 1.0
+   }
+  },
+  "misses": []
+ },
+ "latency": {
+  "embed": {
+   "n": 23,
+   "mean_ms": 10.0,
+   "p50_ms": 8.2,
+   "p95_ms": 21.4,
+   "max_ms": 45.7
+  },
+  "retrieve": {
+   "n": 23,
+   "mean_ms": 1.6,
+   "p50_ms": 1.1,
+   "p95_ms": 4.2,
+   "max_ms": 8.1
+  }
+ }
+}
