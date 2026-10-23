@@ -1,0 +1,72 @@
+{
+  "n": 57,
+  "k": 5,
+  "hit_at_5": 1.0,
+  "recall_at_5": 0.961,
+  "answerable": {
+    "n": 47,
+    "hit_at_5": 1.0,
+    "recall_at_5": 0.961
+  },
+  "by_category": {
+    "multi": {
+      "n": 12,
+      "hit_at_5": 1.0,
+      "recall_at_5": 0.8889
+    },
+    "single": {
+      "n": 35,
+      "hit_at_5": 1.0,
+      "recall_at_5": 0.9857
+    }
+  },
+  "abstention": {
+    "threshold": 0.4,
+    "unanswerable_n": 10,
+    "unanswerable_abstain_rate": 0.7,
+    "answerable_false_abstain_rate": 0.0,
+    "overall_abstain_rate": 0.1228
+  },
+  "misses": [],
+  "unanswerable_top_scores": {
+    "u01": 0.4931,
+    "u02": 0.6563,
+    "u03": 0.6373,
+    "u04": 0.2998,
+    "u05": 0.2244,
+    "u06": 0.327,
+    "u07": 0.245,
+    "u08": 0.1414,
+    "u09": 0.1926,
+    "u10": 0.1389
+  },
+  "model": "sentence-transformers/all-MiniLM-L6-v2",
+  "corpus": {
+    "documents": 40,
+    "chunks": 442
+  },
+  "gates": {
+    "recall_at_5": 0.7,
+    "hit_at_5": 0.8,
+    "faithfulness": 0.85
+  },
+  "top_k": 5,
+  "faithfulness_eval": {
+    "n": 47,
+    "faithfulness": 0.6046,
+    "negative_control": 0.1525,
+    "threshold": 0.5,
+    "judge": "cross-encoder/nli-deberta-v3-small",
+    "answer_source": "generated (llamacpp:qwen2.5-7b-instruct-q4_k_m)",
+    "prompt_version": "v5",
+    "answer_latency": {
+      "n": 47,
+      "mean_ms": 17314.5,
+      "p50_ms": 15396.7,
+      "p95_ms": 33621.3,
+      "max_ms": 53210.5
+    }
+  },
+  "faithfulness": 0.6046,
+  "passed": false
+}
