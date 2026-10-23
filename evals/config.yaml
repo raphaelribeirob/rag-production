@@ -1,6 +1,6 @@
-# Placeholder eval config - runner not implemented yet (TODO).
+# Eval config. Retrieval runner: python -m rag_production.eval_runner (faithfulness TODO).
 corpus: data/corpus/          # FastAPI docs, MIT (github.com/fastapi/fastapi)
-labeled_set: evals/labeled_set.jsonl   # TODO: write from FastAPI docs
+labeled_set: evals/labeled_set.jsonl   # 35 questions, doc-level relevance
 top_k: 5
 llm_provider: extractive               # deterministic, used in CI
 metrics: [hit_rate_at_k, recall_at_k, faithfulness]

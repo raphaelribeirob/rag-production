@@ -31,7 +31,17 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.11"
-      - run: pip install -e ".[dev]"
+      - name: Install (CPU-only torch to keep CI small)
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -e ".[dev]"
+      - name: Cache embedding model
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-all-MiniLM-L6-v2-v1
+      - name: Fetch corpus (FastAPI docs, MIT, pinned commit)
+        run: python tools/fetch_corpus.py
       - name: File length gate (350 lines)
         run: python tools/check_file_length.py
       - name: Lint (blocking)
@@ -40,4 +50,6 @@ jobs:
       - name: Migrate (pgvector extension, table, HNSW index)
         run: python tools/migrate.py
       - run: pytest -q
-      # TODO: add eval gate job once evals/ runner exists (see evals/README.md)
+      - name: Retrieval eval gate (Recall@5 >= 0.70, Hit@5 >= 0.80; full labeled set)
+        run: python -m rag_production.eval_runner --out reports/eval.json
+      # TODO: faithfulness gate (NLI judge, >= 0.85) once implemented

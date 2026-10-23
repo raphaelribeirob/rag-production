@@ -35,3 +35,14 @@ def test_env_example_has_only_placeholder_secrets():
 
 def test_dotenv_is_gitignored():
     assert ".env" in (ROOT / ".gitignore").read_text().splitlines()
+
+
+def test_corpus_source_pinned_to_full_commit_and_https():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("fc", ROOT / "tools" / "fetch_corpus.py")
+    fc = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(fc)
+    assert re.fullmatch(r"[0-9a-f]{40}", fc.COMMIT)
+    assert fc.BASE.startswith("https://raw.githubusercontent.com/fastapi/fastapi/")
+    assert all(re.fullmatch(r"[a-z0-9-]+\.md", p) for p in fc.PAGES)

@@ -2,12 +2,11 @@
 
 ![Status: work in progress](https://img.shields.io/badge/status-work%20in%20progress-orange)
 
-> **Status: work in progress.** All results and metrics are TODO; no numbers have been measured yet.
+> **Status: work in progress.** Week 1: retrieval pipeline and retrieval eval run in CI. Generation
+> (LLM providers) and the faithfulness judge are not built yet.
 
 A production-style RAG API: FastAPI, Postgres + pgvector, local embeddings and
 quality evals gated in CI. Full requirements: [SPEC.md](SPEC.md) (AC1 to AC26).
-
-> Status: **skeleton**. Sections marked TODO are not built yet. No results are claimed.
 
 ## Problem
 Teams that put RAG in front of users rarely know whether retrieval is good enough, or whether
@@ -25,34 +24,51 @@ CI-checked properties instead of demo impressions.
   breakdown, estimated cost, the provider used and a request id. See the SPEC API contract.
 
 ## Demo
-TODO: sample request and response, a terminal recording and the `docker compose up` walkthrough.
+```bash
+docker compose up -d postgres && python tools/fetch_corpus.py && python tools/migrate.py
+API_KEY=$(python -c "import secrets;print(secrets.token_urlsafe(32))") \
+  uvicorn --factory rag_production.api:build_default_app   # API_KEY stays in this shell only
+curl -X POST localhost:8000/ingest -H "X-API-Key: $API_KEY"   # same shell/env
+curl -X POST localhost:8000/query -H 'content-type: application/json' \
+  -d '{"question": "How do I upload a file?", "top_k": 5}'
+```
+`/query` returns `answer` (best chunk verbatim; extractive, no LLM yet), `citations`
+(`chunk_id`, `doc_id`, `score`), `latency_ms` (`embed`, `retrieve`, `total`), `cost_usd` (0.0:
+local model) and `provider`. TODO: terminal recording.
 
 ## Architecture
 Ingest (load, heading-aware chunking, sentence-transformers embeddings) -> Postgres/pgvector (HNSW,
 cosine) -> FastAPI `/query` (embed, retrieve top-k, build prompt with citations) -> LLM provider
 chosen by `LLM_PROVIDER`: `ollama` (local), `hosted_free` (optional) or `extractive`
 (no-model fallback, used in CI). Telemetry: structlog JSON, OpenTelemetry spans, `query_log` table.
-Diagram: see SPEC.md. TODO: `docker-compose.yml`.
+Diagram: see SPEC.md. Built so far: chunking, embeddings, pgvector store, `/ingest`, `/query`
+(retrieval + extractive answer). Not built: LLM providers, telemetry, `query_log`.
 
 ## Tests
-`pip install -e ".[dev]" && pytest -q`. Right now there are only smoke tests for config and metric
-functions. TODO: API contract tests, ingestion idempotency tests and DB integration tests.
+`pip install -e ".[dev]" && pytest -q` (needs the local Postgres above). Covers chunking,
+embeddings, store, ingest idempotency, API contract (auth, input limits) and the eval runner.
 
 ## Evals
 Hit rate@5, recall@5 and faithfulness on a hand-labeled set built from the FastAPI docs.
 CI gate: hit@5 >= 0.80, recall@5 >= 0.70 and faithfulness >= 0.85. Faithfulness is scored by a
 local NLI cross-encoder (`cross-encoder/nli-deberta-v3-small`), which is free and deterministic.
 An LLM judge runs only offline, and its score is reported here without gating.
-**TODO: no eval has run yet. Both result tables are empty.**
+Retrieval numbers below are measured (`python -m rag_production.eval_runner`, full set, run in CI
+on every push). Faithfulness is **not implemented yet**.
 
-| Metric | CI (NLI) | Offline LLM judge |
+| Metric | Measured (2026-10-22) | Gate |
 |---|---|---|
-| hit@5 | TODO | n/a |
-| recall@5 | TODO | n/a |
-| faithfulness | TODO | TODO | See [evals/README.md](evals/README.md).
+| hit@5 (doc level) | 1.00 | >= 0.80 |
+| recall@5 (doc level) | 0.986 | >= 0.70 (stretch 0.80) |
+| faithfulness | not implemented | >= 0.85 (planned) |
+
+Caveat: 35 hand-written questions, one per tutorial page (a few with 2 relevant pages), judged at
+document level against a 40-page corpus. That makes this an easy set: treat the numbers as a
+regression baseline, not as evidence of quality on harder questions. See
+[evals/README.md](evals/README.md).
 
 ## Limitations
-- The corpus (FastAPI docs, MIT) has not been ingested yet, so there are no results.
+- Corpus is 40 FastAPI tutorial pages (MIT); the eval set is small and easy (see Evals).
 - Single tenant, no UI. `/ingest` requires `API_KEY` and fails closed when it is unset. Other endpoints have no auth in v1.
 - Small local models: the extractive fallback gives safe but plain answers.
 - Langfuse dashboards are a separate deliverable (due 2026-12-15).

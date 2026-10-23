@@ -57,3 +57,6 @@ the gate. It will **not** include a UI, multi-tenancy, paid APIs or Langfuse (th
 - 2026-10-22: Postgres + pgvector store (psycopg 3), migrate script, docker-compose and CI
   service container (`pgvector/pgvector:pg16`), Neon deploy notes in README. Next: embeddings +
   ingest into the store, then `/query`.
+- 2026-10-22: week-1 pipeline - chunker, local embeddings, ingest, FastAPI `/ingest` + `/query`,
+  retrieval eval runner (Recall@5/Hit@5 JSON) gated in CI. Next: NLI faithfulness judge, harder
+  eval questions (unanswerable, multi-page), LLM providers.

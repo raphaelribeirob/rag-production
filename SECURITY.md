@@ -6,7 +6,7 @@ listed as covered; everything else is in "Not covered yet". No deployed system e
 ## Scope and method
 - Assets: ingested corpus (FastAPI docs, MIT), Postgres/pgvector store, `API_KEY` (ingest),
   `DATABASE_URL` (may embed a password, e.g. Neon), optional `HOSTED_LLM_API_KEY`.
-- Trust boundaries: HTTP clients -> FastAPI (planned); documents -> prompt (planned); app -> Postgres.
+- Trust boundaries: HTTP clients -> FastAPI; documents -> prompt (planned, no LLM yet); app -> Postgres.
 - Method: manual code review adapted from vibe-coding-toolkit `docs/prompts/13-security-review.md`
   (Matheus Gomes, MIT, commit 790a895). No SAST/DAST or dependency audit run yet.
 
@@ -25,6 +25,12 @@ LLM = OWASP Top 10 for LLM Applications 2025; A = OWASP Top 10 (2021) for the HT
 | Embedding dimension enforced on write | LLM08 Vector and Embedding Weaknesses (partial: integrity of stored vectors only) | `tests/test_store.py::test_wrong_dimension_rejected` |
 | Only free/local LLM providers accepted (no paid API by misconfiguration) | A05 Security Misconfiguration; LLM10 Unbounded Consumption (partial: cost only) | `tests/test_smoke.py::test_invalid_provider_rejected` |
 | Safe default provider is `extractive` (no model call) | A05 Security Misconfiguration | `tests/test_smoke.py::test_default_settings_use_no_model_fallback` |
+| `POST /ingest` over HTTP: 401 without/with wrong `X-API-Key` | A01; A07 | `tests/test_api.py::test_ingest_requires_key` |
+| `POST /ingest` over HTTP: 503 when no `API_KEY` configured | A01; LLM04 | `tests/test_api.py::test_ingest_disabled_without_configured_key` |
+| `/ingest` reads only the server-configured corpus dir; client paths ignored (no path traversal) | A01; LLM04 | `tests/test_api.py::test_ingest_does_not_accept_client_supplied_paths` |
+| `/query` input limits: question 1..2000 chars, `top_k` 1..20, required fields (422) | LLM10 Unbounded Consumption (partial); A04 Insecure Design | `tests/test_api.py::test_query_input_limits` |
+| Per-query cost and latency returned (cost visibility; $0 local model) | LLM10 (partial: observability) | `tests/test_api.py::test_ingest_then_query_returns_citations_cost_latency` |
+| Corpus fetched over HTTPS from a pinned 40-char upstream commit, fixed page allow-list | LLM03 Supply Chain; LLM04 Data and Model Poisoning | `tests/test_repo_hardening.py::test_corpus_source_pinned_to_full_commit_and_https` |
 | GitHub Actions pinned by full commit SHA | LLM03 Supply Chain; A08 Software and Data Integrity Failures | `tests/test_repo_hardening.py::test_actions_pinned_by_full_sha` |
 | CI token read-only, `persist-credentials: false` | A08; A05 | `tests/test_repo_hardening.py::test_workflow_token_is_read_only` |
 | `.env.example` holds placeholders only | LLM02 Sensitive Information Disclosure; A02 Cryptographic Failures (secret handling) | `tests/test_repo_hardening.py::test_env_example_has_only_placeholder_secrets` |
@@ -37,8 +43,9 @@ LLM = OWASP Top 10 for LLM Applications 2025; A = OWASP Top 10 (2021) for the HT
   faithfulness gate >= 0.85 is planned, not implemented), LLM06 Excessive Agency (design has no
   tools; nothing to test yet).
 - LLM08 beyond dimension checks: access control per document/tenant, embedding inversion.
-- LLM10 rate limiting, request size limits (SPEC: question <= 2000 chars), timeouts.
-- A01/A07 on real HTTP endpoints: `api.py` is not wired; `authorize_ingest` is tested as a function.
+- LLM10 rate limiting, request body size limits at the server, timeouts.
+- A07 brute force / rate limiting on `/ingest`; `/query` and `/health` are unauthenticated by design (v1).
+- Embedding model integrity: weights downloaded from Hugging Face by name, not pinned by revision/hash.
 - A02 TLS to the DB: Neon requires `sslmode=require` (documented in README), not enforced in code.
 - A04 Insecure Design threat model, A06 Vulnerable Components (`pip-audit` not run), A10 SSRF
   (no outbound fetches yet; Ollama URL is config-controlled).
@@ -48,5 +55,5 @@ LLM = OWASP Top 10 for LLM Applications 2025; A = OWASP Top 10 (2021) for the HT
 |---|---|---|
 | R-1 | CI had no explicit `permissions:` | fixed (`contents: read`), tested |
 | R-2 | Actions pinned by tag | fixed (SHA pins), tested |
-| R-3 | `/ingest` would be open if `API_KEY` empty | fixed in design (`authorize_ingest` fails closed), tested; endpoint wiring TODO |
+| R-3 | `/ingest` would be open if `API_KEY` empty | fixed: endpoint calls `authorize_ingest` (fails closed), tested over HTTP |
 | R-4 | Indirect prompt injection via corpus | open (hypothesis), see LLM01 above |

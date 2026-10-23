@@ -9,3 +9,5 @@ dist/
 build/
 *.egg-info/
 reports/
+data/corpus/*
+!data/corpus/.gitkeep

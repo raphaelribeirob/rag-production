@@ -79,6 +79,11 @@ class VectorStore:
         ).fetchone()
         return r is not None
 
+    def delete_doc(self, doc_id: str) -> None:
+        """Delete all chunks whose id is '<doc_id>#<n>'."""
+        pattern = doc_id.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "#%"
+        self.conn.execute(sql.SQL("DELETE FROM {} WHERE id LIKE %s").format(self._t), (pattern,))
+
     def clear(self) -> None:
         self.conn.execute(sql.SQL("TRUNCATE {}").format(self._t))
 

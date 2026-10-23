@@ -14,6 +14,7 @@ class Settings:
     llm_provider: str
     top_k: int
     api_key: str = field(default="", repr=False)
+    corpus_dir: str = "data/corpus"
 
 
 def load_settings(env: dict[str, str] | None = None) -> Settings:
@@ -27,6 +28,7 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
         llm_provider=provider,
         top_k=int(env.get("TOP_K", "5")),
         api_key=env.get("API_KEY", ""),
+        corpus_dir=env.get("CORPUS_DIR", "data/corpus"),
     )
 
 

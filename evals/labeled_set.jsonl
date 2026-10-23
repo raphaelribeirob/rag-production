@@ -1,0 +1,35 @@
+{"id": "q01", "question": "How do I run a function after returning a response?", "relevant_doc_ids": ["background-tasks.md"], "answerable": true}
+{"id": "q02", "question": "How do I split my application into multiple files with APIRouter?", "relevant_doc_ids": ["bigger-applications.md"], "answerable": true}
+{"id": "q03", "question": "How can I add validation and metadata to fields inside a Pydantic model?", "relevant_doc_ids": ["body-fields.md"], "answerable": true}
+{"id": "q04", "question": "How do I declare multiple body parameters in one path operation?", "relevant_doc_ids": ["body-multiple-params.md"], "answerable": true}
+{"id": "q05", "question": "How do I define nested Pydantic models with lists of submodels?", "relevant_doc_ids": ["body-nested-models.md"], "answerable": true}
+{"id": "q06", "question": "How do I do partial updates with PATCH?", "relevant_doc_ids": ["body-updates.md"], "answerable": true}
+{"id": "q07", "question": "How do I receive a JSON request body using a Pydantic model?", "relevant_doc_ids": ["body.md"], "answerable": true}
+{"id": "q08", "question": "How do I read cookies in an endpoint?", "relevant_doc_ids": ["cookie-params.md", "cookie-param-models.md"], "answerable": true}
+{"id": "q09", "question": "How do I allow requests from a frontend running on another origin?", "relevant_doc_ids": ["cors.md"], "answerable": true}
+{"id": "q10", "question": "How can I run my app with a debugger in my editor?", "relevant_doc_ids": ["debugging.md"], "answerable": true}
+{"id": "q11", "question": "How do I convert a Pydantic model to a JSON-compatible dict?", "relevant_doc_ids": ["encoder.md"], "answerable": true}
+{"id": "q12", "question": "Can I use UUID, datetime and Decimal types as parameters?", "relevant_doc_ids": ["extra-data-types.md"], "answerable": true}
+{"id": "q13", "question": "How do I have separate input and output models so the password is not returned?", "relevant_doc_ids": ["extra-models.md"], "answerable": true}
+{"id": "q14", "question": "What is the simplest FastAPI application and how do I run it?", "relevant_doc_ids": ["first-steps.md"], "answerable": true}
+{"id": "q15", "question": "How do I return a 404 error with HTTPException?", "relevant_doc_ids": ["handling-errors.md"], "answerable": true}
+{"id": "q16", "question": "How do I read a custom request header like User-Agent?", "relevant_doc_ids": ["header-params.md", "header-param-models.md"], "answerable": true}
+{"id": "q17", "question": "How do I set the title, description and version of the API docs?", "relevant_doc_ids": ["metadata.md"], "answerable": true}
+{"id": "q18", "question": "How do I add a middleware that measures processing time?", "relevant_doc_ids": ["middleware.md"], "answerable": true}
+{"id": "q19", "question": "How do I add tags and a summary to a path operation?", "relevant_doc_ids": ["path-operation-configuration.md"], "answerable": true}
+{"id": "q20", "question": "How do I require a path parameter to be greater than or equal to 1?", "relevant_doc_ids": ["path-params-numeric-validations.md"], "answerable": true}
+{"id": "q21", "question": "How do I declare a path parameter with a type?", "relevant_doc_ids": ["path-params.md"], "answerable": true}
+{"id": "q22", "question": "How do I use a Pydantic model to group query parameters?", "relevant_doc_ids": ["query-param-models.md"], "answerable": true}
+{"id": "q23", "question": "How do I limit the maximum length of a query string parameter?", "relevant_doc_ids": ["query-params-str-validations.md"], "answerable": true}
+{"id": "q24", "question": "How do I make a query parameter optional with a default value?", "relevant_doc_ids": ["query-params.md"], "answerable": true}
+{"id": "q25", "question": "How do I upload a file with UploadFile?", "relevant_doc_ids": ["request-files.md"], "answerable": true}
+{"id": "q26", "question": "How do I receive form fields like username and password?", "relevant_doc_ids": ["request-forms.md", "request-form-models.md"], "answerable": true}
+{"id": "q27", "question": "How do I receive files and form data in the same request?", "relevant_doc_ids": ["request-forms-and-files.md"], "answerable": true}
+{"id": "q28", "question": "How do I filter the output data with response_model?", "relevant_doc_ids": ["response-model.md"], "answerable": true}
+{"id": "q29", "question": "How do I return status code 201 when creating an item?", "relevant_doc_ids": ["response-status-code.md"], "answerable": true}
+{"id": "q30", "question": "How do I add example data to the JSON schema of a model?", "relevant_doc_ids": ["schema-extra-example.md"], "answerable": true}
+{"id": "q31", "question": "How do I connect to a SQL database with SQLModel?", "relevant_doc_ids": ["sql-databases.md"], "answerable": true}
+{"id": "q32", "question": "How do I serve static files from a directory?", "relevant_doc_ids": ["static-files.md"], "answerable": true}
+{"id": "q33", "question": "How do I write tests for my app with TestClient?", "relevant_doc_ids": ["testing.md"], "answerable": true}
+{"id": "q34", "question": "How do I stream events to the client with server-sent events?", "relevant_doc_ids": ["server-sent-events.md"], "answerable": true}
+{"id": "q35", "question": "How do I install FastAPI and follow the tutorial?", "relevant_doc_ids": ["index.md"], "answerable": true}
