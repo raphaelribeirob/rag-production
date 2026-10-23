@@ -94,3 +94,10 @@ def test_answer_record_keeps_ids_docs_and_latency():
         "answer": "ans",
         "contexts": ["t0", "t1"],
     }
+
+
+def test_abstention_uses_best_cosine_even_when_reranked_order_differs():
+    labeled = [{"id": "s1", "question": "a", "relevant_doc_ids": ["a.md"], "category": "single"}]
+    reranked = [("x.md#0", 0.3), ("a.md#0", 0.6)]  # reranker put a lower-cosine chunk first
+    r = evaluate(labeled, lambda q, k: reranked, k=5, abstain_threshold=0.4)
+    assert r["abstention"]["answerable_false_abstain_rate"] == 0.0

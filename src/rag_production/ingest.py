@@ -7,11 +7,17 @@ from rag_production.embeddings import Embedder
 from rag_production.store import VectorStore
 
 
-def ingest_dir(corpus_dir: str | Path, store: VectorStore, embedder: Embedder) -> dict[str, int]:
+def ingest_dir(
+    corpus_dir: str | Path,
+    store: VectorStore,
+    embedder: Embedder,
+    max_chars: int = 1200,
+    overlap: int = 0,
+) -> dict[str, int]:
     docs = sorted(Path(corpus_dir).glob("*.md"))
     n_chunks = 0
     for doc in docs:
-        chunks = chunk_markdown(doc.name, doc.read_text(encoding="utf-8"))
+        chunks = chunk_markdown(doc.name, doc.read_text(encoding="utf-8"), max_chars, overlap)
         store.delete_doc(doc.name)  # drop stale chunks if the doc shrank
         if not chunks:
             continue

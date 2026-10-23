@@ -129,3 +129,15 @@ def test_numbered_context_prompts_number_each_passage():
     out = render(tpl, "why?", ["alpha", "beta"])
     assert out == "C:\n[1] alpha\n\n[2] beta\nQ: why?"
     assert render(PROMPTS["v1"], "q", ["a", "b"]).count("\n\n---\n\n") == 1
+
+
+def test_llamacpp_temperature_and_seed_come_from_settings():
+    fake = FakeLlama()
+    env = {"LLM_PROVIDER": "llamacpp", "LLAMACPP_MODEL_PATH": "/m/x.gguf"}
+    env |= {"LLM_TEMPERATURE": "0.3", "LLM_SEED": "2"}
+    p = get_provider(load_settings(env), llm=fake)
+    p.generate("Q?", CTX)
+    assert fake.calls[0]["temperature"] == 0.3 and fake.calls[0]["seed"] == 2
+    assert (p.temperature, p.seed) == (0.3, 2)
+    s = load_settings({})
+    assert (s.llm_temperature, s.llm_seed) == (0.0, 0)  # baseline stays greedy

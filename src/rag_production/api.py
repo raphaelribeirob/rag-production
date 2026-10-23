@@ -10,6 +10,7 @@ from rag_production.config import IngestAuthError, Settings, authorize_ingest
 from rag_production.embeddings import Embedder
 from rag_production.ingest import ingest_dir
 from rag_production.providers import LLMProvider, get_provider
+from rag_production.retrieval import Reranker, Retriever, get_reranker, table_for
 from rag_production.store import VectorStore
 
 MAX_QUESTION_CHARS = 2000
@@ -30,8 +31,10 @@ def create_app(
     store: VectorStore,
     embedder: Embedder,
     provider: LLMProvider | None = None,
+    reranker: Reranker | None = None,
 ) -> FastAPI:
     app = FastAPI(title="rag-production")
+    retriever = Retriever(store, embedder, reranker, settings.rerank_candidates)
 
     @app.get("/health")
     def health() -> dict:
@@ -44,21 +47,22 @@ def create_app(
             authorize_ingest(settings, x_api_key)
         except IngestAuthError as e:
             raise HTTPException(status_code=e.status, detail=str(e)) from None
-        return ingest_dir(settings.corpus_dir, store, embedder)
+        return ingest_dir(
+            settings.corpus_dir, store, embedder, settings.chunk_size, settings.chunk_overlap
+        )
 
     @app.post("/query")
     def query(body: QueryIn) -> dict:
         t0 = time.perf_counter()
-        (vec,) = embedder.embed([body.question])
-        embed_ms = _ms(t0)
-        t1 = time.perf_counter()
-        hits = store.search(vec, k=body.top_k)
-        retrieve_ms = _ms(t1)
+        found = retriever.retrieve(body.question, k=body.top_k)
+        hits = found.hits
         citations = [
             {"chunk_id": h.chunk_id, "doc_id": h.chunk_id.split("#")[0], "score": h.score}
             for h in hits
         ]
-        abstained = not hits or hits[0].score < settings.abstain_threshold
+        for c, s in zip(citations, found.rerank_scores or [], strict=False):
+            c["rerank_score"] = s  # cross-encoder logit; "score" stays the cosine
+        abstained = not hits or found.top_cosine < settings.abstain_threshold
         t2 = time.perf_counter()
         if abstained:
             answer = ""
@@ -66,7 +70,7 @@ def create_app(
             answer = hits[0].text  # extractive: best chunk verbatim, no LLM call
         else:
             answer = provider.generate(body.question, [h.text for h in hits])
-        latency = {"embed": embed_ms, "retrieve": retrieve_ms}
+        latency = dict(found.ms)
         if provider is not None:
             latency["generate"] = _ms(t2)
         latency["total"] = _ms(t0)
@@ -90,6 +94,9 @@ def build_default_app() -> FastAPI:  # pragma: no cover - wiring for `uvicorn --
 
     settings = load_settings()
     embedder = SentenceTransformerEmbedder(settings.embedding_model)
-    store = VectorStore(settings.database_url, dim=embedder.dim)
+    store = VectorStore(
+        settings.database_url, dim=embedder.dim, table=table_for(settings, "chunks")
+    )
     store.migrate()
-    return create_app(settings, store, embedder, provider=get_provider(settings))
+    provider, reranker = get_provider(settings), get_reranker(settings)
+    return create_app(settings, store, embedder, provider=provider, reranker=reranker)

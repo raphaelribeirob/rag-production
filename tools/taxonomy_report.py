@@ -21,6 +21,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from rag_production.eval_runner import answer_record, load_labeled_set  # noqa: E402
+from rag_production.experiment import read_jsonl  # noqa: E402
 from rag_production.faithfulness import split_sentences  # noqa: E402
 from rag_production.taxonomy import (  # noqa: E402
     agreement,
@@ -94,7 +95,10 @@ def main() -> int:
     ap.add_argument("--sample-out", default="", help="write the audit sample and exit")
     args = ap.parse_args()
 
-    items = json.loads(Path(args.answers).read_text())
+    if args.answers.endswith(".jsonl"):  # tools/retrieval_experiment.py output
+        items = [it for it in read_jsonl(args.answers) if not it.get("abstained")]
+    else:
+        items = json.loads(Path(args.answers).read_text())
     if args.backfill:
         items = backfill(items, load_labeled_set(args.labeled))
     if args.rebuild:

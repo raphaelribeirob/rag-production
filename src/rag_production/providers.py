@@ -87,24 +87,32 @@ class LlamaCppProvider:
     cost_usd = 0.0
 
     def __init__(
-        self, model_path: str, n_ctx=4096, max_tokens=200, llm=None, prompt_version: str = "v1"
+        self,
+        model_path: str,
+        n_ctx=4096,
+        max_tokens=200,
+        llm=None,
+        prompt_version: str = "v1",
+        temperature: float = 0.0,
+        seed: int = 0,
     ):
         self.prompt_version, self._prompt = prompt_version, PROMPTS[prompt_version]
+        self.temperature, self.seed = temperature, seed
         base = re.sub(r"(-\d{5}-of-\d{5})?\.gguf$", "", os.path.basename(model_path))
         self.name = f"llamacpp:{base}"
         self.max_tokens = max_tokens
         if llm is None:  # pragma: no cover - needs the optional package and a model file
             from llama_cpp import Llama
 
-            llm = Llama(model_path=model_path, n_ctx=n_ctx, seed=0, verbose=False)
+            llm = Llama(model_path=model_path, n_ctx=n_ctx, seed=seed, verbose=False)
         self._llm = llm
 
     def generate(self, question: str, contexts: Sequence[str]) -> str:
         prompt = render(self._prompt, question, contexts)
         out = self._llm.create_chat_completion(
             messages=[{"role": "user", "content": prompt}],
-            temperature=0,
-            seed=0,
+            temperature=self.temperature,
+            seed=self.seed,
             max_tokens=self.max_tokens,
         )
         return re.sub(r"\s+", " ", out["choices"][0]["message"]["content"] or "").strip()
@@ -121,6 +129,10 @@ def get_provider(settings, llm=None) -> LLMProvider | None:
         if not settings.llamacpp_model_path:
             raise ValueError("LLM_PROVIDER=llamacpp needs LLAMACPP_MODEL_PATH (a local .gguf file)")
         return LlamaCppProvider(
-            settings.llamacpp_model_path, llm=llm, prompt_version=settings.llm_prompt
+            settings.llamacpp_model_path,
+            llm=llm,
+            prompt_version=settings.llm_prompt,
+            temperature=settings.llm_temperature,
+            seed=settings.llm_seed,
         )
     raise NotImplementedError(f"provider {settings.llm_provider!r} is not implemented")

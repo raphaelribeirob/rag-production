@@ -61,12 +61,34 @@ def _split(body: str, max_chars: int) -> list[str]:
     return parts
 
 
-def chunk_markdown(doc_id: str, text: str, max_chars: int = 1200) -> list[Chunk]:
+def _tail(text: str, n: int) -> str:
+    """Last <= n chars of text, starting at a word boundary when possible."""
+    if n <= 0 or not text:
+        return ""
+    tail = text[-n:]
+    cut = tail.find(" ")
+    return tail[cut + 1 :] if 0 <= cut < len(tail) - 1 and len(text) > n else tail
+
+
+def chunk_markdown(doc_id: str, text: str, max_chars: int = 1200, overlap: int = 0) -> list[Chunk]:
+    """Split by heading, then pack paragraphs up to max_chars (heading prefix included).
+
+    overlap > 0 starts each piece after the first in a section with the last <= overlap chars of
+    the previous piece (word-aligned); pieces are packed to max_chars - overlap so the total
+    still fits. overlap=0 reproduces the original chunker exactly.
+    """
+    if overlap < 0:
+        raise ValueError("overlap must be >= 0")
     chunks: list[Chunk] = []
     for path, body in _sections(text):
         heading = " > ".join(path) if path else doc_id
         budget = max(200, max_chars - len(heading) - 2)
-        for piece in _split("\n".join(body), budget):
+        if overlap and overlap >= budget - 1:
+            raise ValueError(f"overlap {overlap} must be smaller than the chunk budget {budget}")
+        pieces = _split("\n".join(body), budget - (overlap + 1 if overlap else 0))
+        for i, piece in enumerate(pieces):
+            if overlap and i:
+                piece = f"{_tail(pieces[i - 1], overlap)} {piece}"
             cid = f"{doc_id}#{len(chunks)}"
             chunks.append(Chunk(cid, doc_id, heading, f"{heading}\n\n{piece}"))
     return chunks

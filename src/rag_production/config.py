@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 
 from rag_production.prompts import PROMPTS
 
+# Hugging Face commit of cross-encoder/ms-marco-MiniLM-L6-v2 (model.safetensors sha256 821d1aa6...)
+RERANKER_REVISION = "233902d25c440f23af6f7d6e94d2946bac0bee0a"
 VALID_PROVIDERS = ("extractive", "mock", "ollama", "llamacpp", "hosted_free")
 
 
@@ -22,6 +24,13 @@ class Settings:
     ollama_url: str = "http://localhost:11434"
     llamacpp_model_path: str = ""
     llm_prompt: str = "v1"
+    llm_temperature: float = 0.0  # 0 = greedy (the baseline); >0 samples with llm_seed
+    llm_seed: int = 0
+    chunk_size: int = 1200  # max chars per chunk (heading included); 1200 = baseline chunker
+    chunk_overlap: int = 0
+    reranker: str = ""  # "" = off (baseline); e.g. cross-encoder/ms-marco-MiniLM-L6-v2
+    reranker_revision: str = RERANKER_REVISION
+    rerank_candidates: int = 20  # dense candidates reranked down to top_k
 
 
 def load_settings(env: dict[str, str] | None = None) -> Settings:
@@ -32,6 +41,12 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
     prompt = env.get("LLM_PROMPT", "v1")
     if prompt not in PROMPTS:
         raise ValueError(f"LLM_PROMPT must be one of {sorted(PROMPTS)}, got {prompt!r}")
+    chunk_size, overlap = int(env.get("CHUNK_SIZE", "1200")), int(env.get("CHUNK_OVERLAP", "0"))
+    if chunk_size < 200 or not 0 <= overlap < chunk_size // 2:
+        raise ValueError("need CHUNK_SIZE >= 200 and 0 <= CHUNK_OVERLAP < CHUNK_SIZE / 2")
+    candidates = int(env.get("RERANK_CANDIDATES", "20"))
+    if candidates < 1:
+        raise ValueError("RERANK_CANDIDATES must be >= 1")
     return Settings(
         database_url=env.get("DATABASE_URL", "postgresql://rag:rag@localhost:5432/rag"),
         embedding_model=env.get("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2"),
@@ -44,6 +59,13 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
         ollama_url=env.get("OLLAMA_BASE_URL", "http://localhost:11434"),
         llamacpp_model_path=env.get("LLAMACPP_MODEL_PATH", ""),
         llm_prompt=prompt,
+        llm_temperature=float(env.get("LLM_TEMPERATURE", "0")),
+        llm_seed=int(env.get("LLM_SEED", "0")),
+        chunk_size=chunk_size,
+        chunk_overlap=overlap,
+        reranker=env.get("RERANKER", ""),
+        reranker_revision=env.get("RERANKER_REVISION", RERANKER_REVISION),
+        rerank_candidates=candidates,
     )
 
 

@@ -62,7 +62,7 @@ def evaluate(
         ranked = retrieve(row["question"], k)
         docs = _docs([cid for cid, _ in ranked])[:k]
         rel = set(row["relevant_doc_ids"])
-        top = ranked[0][1] if ranked else 0.0
+        top = max((s for _, s in ranked), default=0.0)  # best cosine, even if reranked
         per_q.append(
             {
                 "id": row["id"],
@@ -138,7 +138,7 @@ def answer_record(row: dict, chunk_ids: list[str], texts: list[str], answer: str
     }
 
 
-def _faithfulness(labeled, store, embedder, settings, args) -> dict:  # pragma: no cover
+def _faithfulness(labeled, retriever, settings, args) -> dict:  # pragma: no cover
     from rag_production.faithfulness import NLIJudge, evaluate_faithfulness
     from rag_production.providers import get_provider
 
@@ -147,8 +147,9 @@ def _faithfulness(labeled, store, embedder, settings, args) -> dict:  # pragma: 
     for row in labeled:
         if not row["relevant_doc_ids"]:
             continue
-        hits = store.search(embedder.embed([row["question"]])[0], k=5)
-        if not hits or hits[0].score < settings.abstain_threshold:
+        found = retriever.retrieve(row["question"], k=5)
+        hits = found.hits
+        if not hits or found.top_cosine < settings.abstain_threshold:
             continue
         if args.faithfulness_limit and len(items) >= args.faithfulness_limit:
             break
@@ -172,6 +173,7 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover - exercised 
     from rag_production.config import load_settings
     from rag_production.embeddings import SentenceTransformerEmbedder
     from rag_production.ingest import ingest_dir
+    from rag_production.retrieval import Retriever, get_reranker, table_for
     from rag_production.store import VectorStore
 
     ap = argparse.ArgumentParser()
@@ -184,23 +186,30 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover - exercised 
 
     settings = load_settings()
     embedder = SentenceTransformerEmbedder(settings.embedding_model)
-    store = VectorStore(settings.database_url, dim=embedder.dim, table="chunks_eval")
+    table = table_for(settings, "chunks_eval")  # one table per chunk config
+    store = VectorStore(settings.database_url, dim=embedder.dim, table=table)
     store.migrate()
     store.clear()
-    ingest = ingest_dir(settings.corpus_dir, store, embedder)
+    ingest = ingest_dir(
+        settings.corpus_dir, store, embedder, settings.chunk_size, settings.chunk_overlap
+    )
+    retriever = Retriever(store, embedder, get_reranker(settings), settings.rerank_candidates)
     labeled = load_labeled_set(args.labeled)
     if args.limit:
         labeled = labeled[: args.limit]
     k = max(5, settings.top_k)
 
-    def retrieve(q: str, n: int) -> list[str]:
+    def retrieve(q: str, n: int) -> list[tuple[str, float]]:
         # over-fetch chunks so that 5 distinct documents can be ranked
-        hits = store.search(embedder.embed([q])[0], k=n * 4)
-        return [(h.chunk_id, h.score) for h in hits]
+        return retriever.ranked(q, n * 4)
 
     report = evaluate(labeled, retrieve, k=5, abstain_threshold=settings.abstain_threshold)
     report.update({"model": embedder.name, "corpus": ingest, "gates": GATES, "top_k": k})
-    report["faithfulness_eval"] = _faithfulness(labeled, store, embedder, settings, args)
+    report["retrieval_config"] = {"table": table, "chunk_size": settings.chunk_size} | {
+        "chunk_overlap": settings.chunk_overlap,
+        "reranker": settings.reranker or None,
+    }
+    report["faithfulness_eval"] = _faithfulness(labeled, retriever, settings, args)
     report["faithfulness"] = report["faithfulness_eval"]["faithfulness"]
     failed = gate_failures(report)
     report["passed"] = not failed

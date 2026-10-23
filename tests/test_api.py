@@ -97,3 +97,23 @@ def test_query_without_provider_is_extractive(client):
     client.post("/ingest", headers={"X-API-Key": KEY})
     body = client.post("/query", json={"question": "upload files"}).json()
     assert body["provider"] == "extractive" and body["answer_source"] == "extractive"
+
+
+def test_query_with_reranker_reports_rerank_latency(store, tmp_path):
+    (tmp_path / "files.md").write_text("# Files\n\nUpload files with UploadFile.\n")
+    (tmp_path / "cors.md").write_text("# CORS\n\nUse CORSMiddleware for CORS.\n")
+
+    class Reverse:
+        name = "reverse"
+
+        def score(self, question, texts):
+            return [-float(i) for i in range(len(texts))][::-1]  # last dense hit ranks first
+
+    env = {"API_KEY": KEY, "CORPUS_DIR": str(tmp_path), "ABSTAIN_THRESHOLD": "-1"}
+    app = create_app(load_settings(env), store, HashEmbedder(dim=3), reranker=Reverse())
+    c = TestClient(app)
+    c.post("/ingest", headers={"X-API-Key": KEY})
+    body = c.post("/query", json={"question": "upload files", "top_k": 2}).json()
+    assert "rerank" in body["latency_ms"] and len(body["citations"]) == 2
+    assert body["citations"][0]["score"] <= body["citations"][1]["score"]
+    assert body["citations"][0]["rerank_score"] >= body["citations"][1]["rerank_score"]
