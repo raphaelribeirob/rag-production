@@ -78,6 +78,7 @@ on every push).
 | faithfulness, extractive answer (45; CI before providers, run 39877673255) | 0.993 (negative control 0.055) | same gate |
 | faithfulness, real LLM: Qwen2.5-7B-Instruct Q4_K_M, llama-cpp, local CPU (46) | **0.647** (negative control 0.150); generation p50 15.5 s, p95 29.7 s per query | fails 0.85; local only, not in CI |
 | same model, prompt v5 (chosen on dev, run once on test) vs v1 control, both after an env rebuild (47) | v5 **0.605** vs v1 0.588 (negative control 0.153 / 0.099) | fails 0.85; default prompt stays v1 |
+| retrieval experiment (test, 47, 3 seeds, temp 0.3): 400/80 chunks + ms-marco reranker vs 1200 baseline | small judge **0.735** [0.707-0.762] vs 0.619 [0.603-0.643]; large judge **0.717** [0.681-0.741] vs 0.652 [0.638-0.669]; hallucination (upper bound) 0.40 vs 0.50 small, 0.41 vs 0.47 large; generation mean 13.9 s vs 19.0 s | fails 0.85; large-judge bootstrap CI -0.031 to +0.181 includes 0, so the default stays 1200 / no reranker |
 
 Caveats: questions are hand-written (35 single-page, 12 multi-page, 10 unanswerable) and judged at
 document level against a 40-page corpus. Retrieval questions are still fairly easy; treat the
@@ -91,6 +92,12 @@ agreement with a 20-answer agent hand audit, over-calls hallucination) puts the 
 at most 0.46 for v1 and 0.43 for v5. A prompt change chosen on dev did not close the gap (details in
 [evals/README.md](evals/README.md#failure-taxonomy-and-prompt-v5-2026-10-2223-local-cpu)). The mock copies retrieved sentences, so its 1.000 only
 shows the generation path and judge are wired correctly; it says nothing about LLM quality. See [evals/README.md](evals/README.md).
+Smaller chunks (400/80) plus a cross-encoder reranker raised faithfulness under both judges on all
+3 test seeds, but the pre-registered rule needs the paired bootstrap CI to exclude 0 under both judges;
+it does for the small judge (+0.125, CI +0.022 to +0.230) and not for the large one (+0.074, CI -0.031 to
++0.181). Dev had ranked the baseline first. So the default is unchanged; the config is opt-in via env
+vars. It also costs some recall (doc Recall@5 0.961 -> 0.943) and about 127 ms rerank per query
+([evals/README.md](evals/README.md#smaller-chunks--reranker-2026-10-23-local-cpu)).
 
 ## Limitations
 - Corpus is 40 FastAPI tutorial pages (MIT); the eval set is small and easy (see Evals).
@@ -101,6 +108,8 @@ shows the generation path and judge are wired correctly; it says nothing about L
   labels were made by an AI agent (Grok Bot), not a human. 47 test questions is a small set, so
   small gaps (e.g. v5 vs v1, or between NLI judges) are within noise. Larger judges are offline only
   ([evals/README.md](evals/README.md#larger-nli-judge-offline-comparison-only-2026-10-23-local-cpu)).
+- Optional reranker (`RERANKER`, off by default) and chunk size (`CHUNK_SIZE`/`CHUNK_OVERLAP`) need a
+  re-ingest into their own table; the reranker model is downloaded from Hugging Face at a pinned revision.
 - Langfuse dashboards are a separate deliverable (due 2026-12-15).
 
 ## Attribution

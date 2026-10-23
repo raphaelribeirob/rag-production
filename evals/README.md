@@ -225,3 +225,93 @@ PYTHONPATH=src python tools/taxonomy_report.py --answers reports/test_answers_v1
 PYTHONPATH=src python tools/taxonomy_report.py --answers reports/test_answers_v5.json \
   --judge $J --out evals/results/2026-10-22_judge_${S}_after_v5.json
 ```
+
+## Smaller chunks + reranker (2026-10-23, local CPU)
+Goal: cut hallucination through retrieval. Baseline `c1200` (1200-char chunks, no overlap, no
+reranker, the default) vs smaller heading-aware chunks with optional overlap and a cross-encoder
+reranker over 20 pgvector candidates. Reranker `cross-encoder/ms-marco-MiniLM-L6-v2` (Apache-2.0),
+revision `233902d25c440f23af6f7d6e94d2946bac0bee0a`, safetensors sha256
+`821d1aa69520101d6e0737f78a042ae25b19e5cb9160701909d10434f4aeb0ae`. LLM: Qwen2.5-7B-Instruct
+Q4_K_M via llama-cpp, prompt v1, temperature 0.3. Judges, gate (0.85) and abstention threshold
+(0.40) unchanged; dev and test sets unchanged.
+
+**Dev (choose one config, seed 0).** Dev retrieval is saturated (Hit@5 = Recall@5 = 1.00 for all 6
+configs), so 5 configs went to the LLM check. No candidate beat the baseline on dev (baseline
+0.877 small / 0.804 large); the best candidate, `c400_rr` (400/80 + reranker, 0.819 / 0.754), was
+the only one run on test. Full table: `evals/results/2026-10-23_retrieval/dev/DECISION.md`.
+
+**Test (run once, after the dev decision): `c1200` vs `c400_rr`, seeds 0, 1, 2.** All 47
+answerable questions answered (0 abstentions) in all 6 runs. n=46 where the baseline had one
+unscored item under a judge.
+
+**Small judge** (3 seeds: mean [min-max] (t 95% CI))
+
+| metric | c1200 baseline | c400_rr (400/80 + reranker) |
+|---|---|---|
+| faithfulness (gate 0.85) | 0.619 [0.603-0.643] (0.566 to 0.672) | 0.735 [0.707-0.762] (0.666 to 0.803) |
+| negative control | 0.158 [0.138-0.185] (0.097 to 0.218) | 0.112 [0.101-0.131] (0.070 to 0.154) |
+| supported | 0.367 [0.340-0.391] (0.304 to 0.431) | 0.553 [0.511-0.596] (0.448 to 0.659) |
+| hallucination (upper bound) | 0.503 [0.457-0.575] (0.347 to 0.659) | 0.404 [0.362-0.425] (0.313 to 0.496) |
+| evasive refusal | 0.015 [0.000-0.022] (-0.017 to 0.046) | 0.000 [0.000-0.000] (0.000 to 0.000) |
+| unrecognized paraphrase | 0.115 [0.085-0.130] (0.050 to 0.180) | 0.043 [0.021-0.064] (-0.010 to 0.095) |
+| paired bootstrap, new - base (n=47, 10k) | | +0.125 (95% CI +0.022 to +0.230) |
+
+**Large judge** (3 seeds: mean [min-max] (t 95% CI))
+
+| metric | c1200 baseline | c400_rr (400/80 + reranker) |
+|---|---|---|
+| faithfulness (gate 0.85) | 0.652 [0.638-0.669] (0.613 to 0.691) | 0.717 [0.681-0.741] (0.638 to 0.796) |
+| negative control | 0.202 [0.180-0.229] (0.141 to 0.263) | 0.133 [0.117-0.160] (0.075 to 0.191) |
+| supported | 0.431 [0.413-0.447] (0.389 to 0.474) | 0.546 [0.468-0.596] (0.376 to 0.716) |
+| hallucination (upper bound) | 0.468 [0.435-0.500] (0.387 to 0.549) | 0.411 [0.362-0.489] (0.241 to 0.581) |
+| evasive refusal | 0.029 [0.021-0.043] (-0.003 to 0.060) | 0.000 [0.000-0.000] (0.000 to 0.000) |
+| unrecognized paraphrase | 0.072 [0.064-0.087] (0.040 to 0.104) | 0.043 [0.043-0.043] (0.043 to 0.043) |
+| paired bootstrap, new - base (n=47, 10k) | | +0.074 (95% CI -0.031 to +0.181) |
+
+| retrieval (test, 47 answerable) | chunks | Recall@5 / Hit@5 (doc, 20 cand.) | Recall@5 / Hit@5 (final 5 chunks) |
+|---|---|---|---|
+| c1200 | 442 | 0.961 / 1.000 | 0.911 / 1.000 |
+| c400_rr | 1134 | 0.943 / 1.000 | 0.872 / 0.979 |
+
+| latency per query, mean ms (3 seeds: mean [min-max]) | c1200 | c400_rr |
+|---|---|---|
+| embed | 28 [17-37] | 21 [14-34] |
+| retrieve | 3 [2-3] | 3 [2-3] |
+| rerank | - | 127 [101-148] |
+| generate | 18966 [17249-21736] | 13917 [13746-14037] |
+| total | 18998 [17283-21776] | 14068 [13863-14185] |
+
+Pre-registered rule met (default changes): **False**.
+Latency p50 of total per seed: c1200 17956 / 16770 / 16628 ms, c400_rr 14293 / 13439 / 14286 ms.
+Other agents' jobs shared the 8 vCPU box during runs, so latency is indicative only.
+
+Reading:
+- `c400_rr` scores higher than the baseline under both judges on every seed: faithfulness
+  +0.125 (small) and +0.074 (large), lower negative control, fewer hallucination labels
+  (0.404 vs 0.503 small, 0.411 vs 0.468 large) and no evasive refusals.
+- The pre-registered rule (`src/rag_production/experiment.py`: under **both** judges, the paired
+  bootstrap 95% CI excludes 0 **and** the new worst seed beats the baseline best seed) holds for
+  the small judge but not the large one: the large-judge CI is -0.031 to +0.181. **The default
+  stays `c1200` without a reranker.** `c400_rr` is available via `CHUNK_SIZE=400 CHUNK_OVERLAP=80
+  RERANKER=cross-encoder/ms-marco-MiniLM-L6-v2` (re-ingest needed).
+- This contradicts dev, where the baseline won; with 23 dev and 47 test questions the ranking is
+  not stable. Both configs stay far below the 0.85 gate.
+- Costs: retrieval recall drops slightly (doc Recall@5 0.961 -> 0.943; on the final 5 chunks
+  0.911 -> 0.872, Hit 1.000 -> 0.979), 2.6x more chunks, about 127 ms rerank per query. Generation
+  is faster with shorter context (about 14 s vs 19 s mean).
+
+Files: `evals/results/2026-10-23_retrieval/{dev,test}/` (`retrieval_*.json`, `answers_*_s*.jsonl`
++ `.meta.json`, `judge_{small,large}_*_s*.json`, `test/summary.json`).
+Commands (`C` = `c1200` or `c400_rr`, `S` = 0, 1, 2, `J` = `small` or `large`; dev uses
+`evals/dev_set.jsonl` and seed 0):
+```bash
+export PYTHONPATH=src LLM_PROVIDER=llamacpp LLAMACPP_MODEL_PATH=<qwen2.5-7b-instruct-q4_k_m gguf>
+D=evals/results/2026-10-23_retrieval/test; L=evals/labeled_set.jsonl
+python tools/retrieval_experiment.py retrieval --config $C --labeled $L --out $D/retrieval_$C.json
+python tools/retrieval_experiment.py generate --config $C --labeled $L --seed $S --temperature 0.3 \
+  --out $D/answers_${C}_s$S.jsonl
+python tools/taxonomy_report.py --answers $D/answers_${C}_s$S.jsonl --labeled $L \
+  --judge cross-encoder/nli-deberta-v3-$J --out $D/judge_${J}_${C}_s$S.json
+python tools/retrieval_experiment.py summarize --dir $D --base c1200 --new c400_rr --seeds 0 1 2 \
+  --out $D/summary.json
+```

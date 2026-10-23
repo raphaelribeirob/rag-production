@@ -162,7 +162,8 @@ def cmd_summarize(a) -> None:
             for k in ("embed", "retrieve", "rerank", "generate", "total")
             if all(m["latency"].get(k) for m in metas)
         }
-    Path(a.out).write_text(json.dumps(res, indent=1) + "\n")
+    body = ",\n".join(f" {json.dumps(k)}: {json.dumps(v)}" for k, v in res.items())
+    Path(a.out).write_text("{\n" + body + "\n}\n")  # compact: keeps the file under 350 lines
     print(json.dumps(res, indent=1))
 
 
