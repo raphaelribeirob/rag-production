@@ -26,6 +26,19 @@ PROMPTS = {
         "Answer in at most 3 sentences, no code blocks.\n\n"
         "Context:\n{numbered_context}\n\nQuestion: {question}\nAnswer:"
     ),
+    "v3": (
+        "Answer the question about FastAPI using ONLY the numbered context passages below.\n"
+        "Rules:\n"
+        "1. Reuse the passages' own wording where possible. Put the number of the passage each "
+        "sentence comes from in brackets just BEFORE the sentence's final period, like this [2].\n"
+        "2. Do not add facts, code, names, values or steps that are not in the passages, even if "
+        "you know them.\n"
+        "3. If the passages answer only part of the question, answer that part and stop; do not "
+        "guess the rest.\n"
+        '4. Reply "I don\'t know." only if no passage is relevant to the question.\n'
+        "Answer in at most 3 plain sentences. Never write code or code blocks.\n\n"
+        "Context:\n{numbered_context}\n\nQuestion: {question}\nAnswer:"
+    ),
 }
 
 
