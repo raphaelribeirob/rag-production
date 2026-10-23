@@ -7,6 +7,9 @@
 --backfill: answers saved before 2026-10-23 have no ids or doc ids; they are matched in order to
 the answerable questions and retrieval is re-run (deterministic) to recover the top-5 doc ids;
 the recovered context texts must equal the saved ones or the tool stops.
+--rebuild: --answers is a committed taxonomy report (evals/results/*taxonomy*.json); its answers
+are re-paired with re-retrieved contexts (used when the raw answers file is gone). With the same
+judge the rebuilt run must reproduce the committed scores, which proves the contexts match.
 """
 
 import argparse
@@ -27,7 +30,7 @@ from rag_production.taxonomy import (  # noqa: E402
 )
 
 
-def backfill(items: list[dict], labeled: list[dict]) -> list[dict]:
+def _searcher():
     from rag_production.config import load_settings
     from rag_production.embeddings import SentenceTransformerEmbedder
     from rag_production.store import VectorStore
@@ -35,16 +38,30 @@ def backfill(items: list[dict], labeled: list[dict]) -> list[dict]:
     settings = load_settings()
     emb = SentenceTransformerEmbedder(settings.embedding_model)
     store = VectorStore(settings.database_url, dim=emb.dim, table="chunks_eval")
+    return lambda question: store.search(emb.embed([question])[0], k=5)
+
+
+def backfill(items: list[dict], labeled: list[dict]) -> list[dict]:
+    search = _searcher()
     rows = [r for r in labeled if r["relevant_doc_ids"]]
     assert len(rows) == len(items), "answer count != answerable questions (abstentions?)"
     out = []
     for row, it in zip(rows, items, strict=True):
-        hits = store.search(emb.embed([row["question"]])[0], k=5)
+        hits = search(row["question"])
         texts = [h.text for h in hits]
         if texts != it["contexts"]:
             raise SystemExit(f"{row['id']}: re-retrieved contexts differ from the saved ones")
         out.append(answer_record(row, [h.chunk_id for h in hits], texts, it["answer"], 0.0))
-    store.close()
+    return out
+
+
+def rebuild(items: list[dict], labeled: list[dict], search) -> list[dict]:
+    rows = {r["id"]: r for r in labeled}
+    out = []
+    for it in items:
+        hits = search(rows[it["id"]]["question"])
+        ids, texts = [h.chunk_id for h in hits], [h.text for h in hits]
+        out.append(answer_record(rows[it["id"]], ids, texts, it["answer"], 0.0))
     return out
 
 
@@ -71,6 +88,7 @@ def main() -> int:
     ap.add_argument("--judge", default="cross-encoder/nli-deberta-v3-small")
     ap.add_argument("--out", default="")
     ap.add_argument("--backfill", action="store_true")
+    ap.add_argument("--rebuild", action="store_true", help="--answers is a taxonomy report")
     ap.add_argument("--hand", default="", help="JSON {id: label} from the blind hand audit")
     ap.add_argument("--sample", type=int, default=20)
     ap.add_argument("--sample-out", default="", help="write the audit sample and exit")
@@ -79,6 +97,8 @@ def main() -> int:
     items = json.loads(Path(args.answers).read_text())
     if args.backfill:
         items = backfill(items, load_labeled_set(args.labeled))
+    if args.rebuild:
+        items = rebuild(items["items"], load_labeled_set(args.labeled), _searcher())
     if args.sample_out:
         print(json.dumps(write_sample(items, args.sample, args.sample_out)))
         return 0
