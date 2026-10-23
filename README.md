@@ -56,16 +56,18 @@ An LLM judge runs only offline, and its score is reported here without gating.
 Retrieval numbers below are measured (`python -m rag_production.eval_runner`, full set, run in CI
 on every push). Faithfulness is **not implemented yet**.
 
-| Metric | Measured (2026-10-22) | Gate |
+| Metric (answerable, n=47) | Measured (2026-10-22) | Gate |
 |---|---|---|
-| hit@5 (doc level) | 1.00 | >= 0.80 |
-| recall@5 (doc level) | 0.986 | >= 0.70 (stretch 0.80) |
+| hit@5 (doc level) | 1.00 (single 1.00, multi 1.00) | >= 0.80 |
+| recall@5 (doc level) | 0.961 (single 0.986, multi 0.889) | >= 0.70 (stretch 0.80) |
+| abstention on 10 unanswerable | 70% (3 near-domain answered wrongly) | reported, not gated |
+| false abstention on answerable | 0% | reported, not gated |
 | faithfulness | not implemented | >= 0.85 (planned) |
 
-Caveat: 35 hand-written questions, one per tutorial page (a few with 2 relevant pages), judged at
-document level against a 40-page corpus. That makes this an easy set: treat the numbers as a
-regression baseline, not as evidence of quality on harder questions. See
-[evals/README.md](evals/README.md).
+Caveats: questions are hand-written (35 single-page, 12 multi-page, 10 unanswerable) and judged at
+document level against a 40-page corpus. Retrieval questions are still fairly easy; treat the
+numbers as a regression baseline. Abstention is a fixed top-1 cosine threshold (0.40), which is
+crude and misses near-domain questions. See [evals/README.md](evals/README.md).
 
 ## Limitations
 - Corpus is 40 FastAPI tutorial pages (MIT); the eval set is small and easy (see Evals).

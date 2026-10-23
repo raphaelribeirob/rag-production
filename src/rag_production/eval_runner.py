@@ -29,22 +29,68 @@ def _docs(chunk_ids: list[str]) -> list[str]:
     return seen
 
 
-def evaluate(labeled: list[dict], retrieve: Callable[[str, int], list[str]], k: int = 5) -> dict:
-    """retrieve(question, k) -> ranked chunk ids; relevance is judged per source document."""
-    per_q = []
-    for row in labeled:
-        docs = _docs(retrieve(row["question"], k))[:k]
-        rel = set(row["relevant_doc_ids"])
-        per_q.append(
-            {"id": row["id"], "hit": hit_at_k(docs, rel, k), "recall": recall_at_k(docs, rel, k)}
-        )
-    n = len(per_q)
+def _agg(rows: list[dict]) -> dict:
+    n = len(rows)
+    if not n:
+        return {"n": 0, "hit_at_5": None, "recall_at_5": None}
     return {
         "n": n,
+        "hit_at_5": round(sum(q["hit"] for q in rows) / n, 4),
+        "recall_at_5": round(sum(q["recall"] for q in rows) / n, 4),
+    }
+
+
+def _rate(rows: list[dict]) -> float | None:
+    return round(sum(q["abstained"] for q in rows) / len(rows), 4) if rows else None
+
+
+def evaluate(
+    labeled: list[dict],
+    retrieve: Callable[[str, int], list[tuple[str, float]]],
+    k: int = 5,
+    abstain_threshold: float = 0.40,
+) -> dict:
+    """retrieve(question, n) -> ranked (chunk_id, cosine). Relevance is judged per document.
+
+    Retrieval metrics use answerable questions only; abstention = top-1 score < threshold.
+    """
+    per_q = []
+    for row in labeled:
+        ranked = retrieve(row["question"], k)
+        docs = _docs([cid for cid, _ in ranked])[:k]
+        rel = set(row["relevant_doc_ids"])
+        top = ranked[0][1] if ranked else 0.0
+        per_q.append(
+            {
+                "id": row["id"],
+                "category": row.get("category", "single" if rel else "unanswerable"),
+                "answerable": bool(rel),
+                "hit": hit_at_k(docs, rel, k) if rel else 0.0,
+                "recall": recall_at_k(docs, rel, k) if rel else 0.0,
+                "abstained": top < abstain_threshold,
+                "top_score": round(top, 4),
+            }
+        )
+    ans = [q for q in per_q if q["answerable"]]
+    unans = [q for q in per_q if not q["answerable"]]
+    cats = sorted({q["category"] for q in ans})
+    overall = _agg(ans)
+    return {
+        "n": len(per_q),
         "k": k,
-        "hit_at_5": round(sum(q["hit"] for q in per_q) / n, 4),
-        "recall_at_5": round(sum(q["recall"] for q in per_q) / n, 4),
-        "misses": [q["id"] for q in per_q if q["hit"] == 0.0],
+        "hit_at_5": overall["hit_at_5"],
+        "recall_at_5": overall["recall_at_5"],
+        "answerable": overall,
+        "by_category": {c: _agg([q for q in ans if q["category"] == c]) for c in cats},
+        "abstention": {
+            "threshold": abstain_threshold,
+            "unanswerable_n": len(unans),
+            "unanswerable_abstain_rate": _rate(unans),
+            "answerable_false_abstain_rate": _rate(ans),
+            "overall_abstain_rate": _rate(per_q),
+        },
+        "misses": [q["id"] for q in ans if q["hit"] == 0.0],
+        "unanswerable_top_scores": {q["id"]: q["top_score"] for q in unans},
     }
 
 
@@ -73,9 +119,10 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover - exercised 
 
     def retrieve(q: str, n: int) -> list[str]:
         # over-fetch chunks so that 5 distinct documents can be ranked
-        return [h.chunk_id for h in store.search(embedder.embed([q])[0], k=n * 4)]
+        hits = store.search(embedder.embed([q])[0], k=n * 4)
+        return [(h.chunk_id, h.score) for h in hits]
 
-    report = evaluate(labeled, retrieve, k=5)
+    report = evaluate(labeled, retrieve, k=5, abstain_threshold=settings.abstain_threshold)
     report.update({"model": embedder.name, "corpus": ingest, "gates": GATES, "top_k": k})
     report["faithfulness"] = "not implemented yet (NLI judge planned)"
     failed = [m for m, g in GATES.items() if report[m] < g]

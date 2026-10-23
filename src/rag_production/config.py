@@ -15,6 +15,7 @@ class Settings:
     top_k: int
     api_key: str = field(default="", repr=False)
     corpus_dir: str = "data/corpus"
+    abstain_threshold: float = 0.40  # top-1 cosine below this -> abstain
 
 
 def load_settings(env: dict[str, str] | None = None) -> Settings:
@@ -29,6 +30,7 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
         top_k=int(env.get("TOP_K", "5")),
         api_key=env.get("API_KEY", ""),
         corpus_dir=env.get("CORPUS_DIR", "data/corpus"),
+        abstain_threshold=float(env.get("ABSTAIN_THRESHOLD", "0.40")),
     )
 
 

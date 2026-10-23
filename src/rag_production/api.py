@@ -52,9 +52,11 @@ def create_app(settings: Settings, store: VectorStore, embedder: Embedder) -> Fa
             {"chunk_id": h.chunk_id, "doc_id": h.chunk_id.split("#")[0], "score": h.score}
             for h in hits
         ]
-        answer = hits[0].text if hits else ""
+        abstained = not hits or hits[0].score < settings.abstain_threshold
+        answer = "" if abstained else hits[0].text
         return {
             "answer": answer,  # extractive provider: best chunk verbatim, no LLM call
+            "abstained": abstained,
             "citations": citations,
             "provider": "extractive",
             "cost_usd": 0.0,  # local embeddings + extractive answer = $0

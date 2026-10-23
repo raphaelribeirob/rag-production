@@ -31,6 +31,7 @@ LLM = OWASP Top 10 for LLM Applications 2025; A = OWASP Top 10 (2021) for the HT
 | `/query` input limits: question 1..2000 chars, `top_k` 1..20, required fields (422) | LLM10 Unbounded Consumption (partial); A04 Insecure Design | `tests/test_api.py::test_query_input_limits` |
 | Per-query cost and latency returned (cost visibility; $0 local model) | LLM10 (partial: observability) | `tests/test_api.py::test_ingest_then_query_returns_citations_cost_latency` |
 | Corpus fetched over HTTPS from a pinned 40-char upstream commit, fixed page allow-list | LLM03 Supply Chain; LLM04 Data and Model Poisoning | `tests/test_repo_hardening.py::test_corpus_source_pinned_to_full_commit_and_https` |
+| `/query` abstains (empty answer, `abstained: true`) when top-1 similarity < `ABSTAIN_THRESHOLD` | LLM09 Misinformation (partial: 70% abstention on unanswerable eval set) | `tests/test_api.py::test_query_abstains_below_threshold` |
 | GitHub Actions pinned by full commit SHA | LLM03 Supply Chain; A08 Software and Data Integrity Failures | `tests/test_repo_hardening.py::test_actions_pinned_by_full_sha` |
 | CI token read-only, `persist-credentials: false` | A08; A05 | `tests/test_repo_hardening.py::test_workflow_token_is_read_only` |
 | `.env.example` holds placeholders only | LLM02 Sensitive Information Disclosure; A02 Cryptographic Failures (secret handling) | `tests/test_repo_hardening.py::test_env_example_has_only_placeholder_secrets` |
@@ -39,7 +40,7 @@ LLM = OWASP Top 10 for LLM Applications 2025; A = OWASP Top 10 (2021) for the HT
 ## Not covered yet (no test, so not claimed)
 - LLM01 Prompt Injection (incl. indirect via retrieved docs): generation not built; planned
   adversarial eval (SPEC AC26-style) and tool-free, cite-only answers.
-- LLM05 Improper Output Handling, LLM07 System Prompt Leakage, LLM09 Misinformation (the NLI
+- LLM05 Improper Output Handling, LLM07 System Prompt Leakage, LLM09 Misinformation beyond abstention (the NLI
   faithfulness gate >= 0.85 is planned, not implemented), LLM06 Excessive Agency (design has no
   tools; nothing to test yet).
 - LLM08 beyond dimension checks: access control per document/tenant, embedding inversion.

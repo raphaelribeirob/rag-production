@@ -2,22 +2,49 @@ import json
 
 from rag_production.eval_runner import evaluate, load_labeled_set
 
+LABELED = [
+    {"id": "s1", "question": "a", "relevant_doc_ids": ["a.md"], "category": "single"},
+    {"id": "m1", "question": "b", "relevant_doc_ids": ["b.md", "c.md"], "category": "multi"},
+    {"id": "u1", "question": "z", "relevant_doc_ids": [], "category": "unanswerable"},
+    {"id": "u2", "question": "y", "relevant_doc_ids": [], "category": "unanswerable"},
+]
+RANKED = {
+    "a": [("a.md#0", 0.8), ("a.md#1", 0.7), ("x.md#0", 0.5)],
+    "b": [("b.md#2", 0.6), ("y.md#0", 0.5)],
+    "z": [("x.md#0", 0.2)],  # below threshold -> abstain (correct)
+    "y": [("x.md#1", 0.9)],  # above threshold -> answers (wrong)
+}
 
-def test_evaluate_doc_level_metrics():
-    labeled = [
-        {"id": "q1", "question": "a", "relevant_doc_ids": ["a.md"]},
-        {"id": "q2", "question": "b", "relevant_doc_ids": ["b.md", "c.md"]},
-    ]
-    ranked = {"a": ["a.md#0", "a.md#1", "x.md#0"], "b": ["b.md#2", "y.md#0"]}
-    report = evaluate(labeled, lambda q, k: ranked[q][:k], k=5)
-    assert report["n"] == 2
-    assert report["hit_at_5"] == 1.0
-    assert report["recall_at_5"] == 0.75
-    json.dumps(report)
+
+def _report():
+    return evaluate(LABELED, lambda q, k: RANKED[q][:k], k=5, abstain_threshold=0.4)
+
+
+def test_retrieval_metrics_by_category_and_overall():
+    r = _report()
+    assert r["by_category"]["single"] == {"n": 1, "hit_at_5": 1.0, "recall_at_5": 1.0}
+    assert r["by_category"]["multi"] == {"n": 1, "hit_at_5": 1.0, "recall_at_5": 0.5}
+    assert r["answerable"] == {"n": 2, "hit_at_5": 1.0, "recall_at_5": 0.75}
+    json.dumps(r)
+
+
+def test_abstention_rates():
+    r = _report()
+    assert r["abstention"]["threshold"] == 0.4
+    assert r["abstention"]["unanswerable_abstain_rate"] == 0.5
+    assert r["abstention"]["answerable_false_abstain_rate"] == 0.0
+    assert r["abstention"]["overall_abstain_rate"] == 0.25
 
 
 def test_labeled_set_is_well_formed():
     rows = load_labeled_set("evals/labeled_set.jsonl")
-    assert len(rows) >= 30
     assert len({r["id"] for r in rows}) == len(rows)
-    assert all(r["question"] and r["relevant_doc_ids"] for r in rows)
+    cats = [r["category"] for r in rows]
+    assert cats.count("single") >= 30
+    assert cats.count("multi") >= 10
+    assert cats.count("unanswerable") >= 10
+    for r in rows:
+        assert r["question"]
+        assert r["answerable"] == bool(r["relevant_doc_ids"])
+        if r["category"] == "multi":
+            assert len(r["relevant_doc_ids"]) >= 2

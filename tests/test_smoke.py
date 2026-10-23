@@ -25,3 +25,8 @@ def test_metrics_on_toy_example():
     assert hit_at_k(retrieved, {"c3"}) == 1.0
     assert hit_at_k(retrieved, {"c6"}) == 0.0
     assert recall_at_k(retrieved, {"c1", "c6"}) == 0.5
+
+
+def test_abstain_threshold_default_and_override():
+    assert load_settings({}).abstain_threshold == 0.40
+    assert load_settings({"ABSTAIN_THRESHOLD": "0.5"}).abstain_threshold == 0.5

@@ -58,3 +58,22 @@ def test_query_input_limits(client, payload):
 def test_ingest_does_not_accept_client_supplied_paths(client):
     r = client.post("/ingest", headers={"X-API-Key": KEY}, json={"path": "/etc"})
     assert r.status_code == 200 and r.json()["documents"] == 2
+
+
+def test_query_abstains_below_threshold(store, tmp_path):
+    (tmp_path / "cors.md").write_text("# CORS\n\nUse CORSMiddleware.\n")
+    settings = load_settings(
+        {"API_KEY": KEY, "CORPUS_DIR": str(tmp_path), "ABSTAIN_THRESHOLD": "1.01"}
+    )
+    c = TestClient(create_app(settings, store, HashEmbedder(dim=3)))
+    c.post("/ingest", headers={"X-API-Key": KEY})
+    body = c.post("/query", json={"question": "CORS"}).json()
+    assert body["abstained"] is True
+    assert body["answer"] == ""
+    assert body["citations"]  # still returned for transparency
+
+
+def test_query_answers_above_threshold(client):
+    client.post("/ingest", headers={"X-API-Key": KEY})
+    body = client.post("/query", json={"question": "upload files"}).json()
+    assert body["abstained"] is False and body["answer"]
