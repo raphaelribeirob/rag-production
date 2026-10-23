@@ -1,0 +1,54 @@
+{
+ "config": "c400_rr",
+ "table": "chunks_eval_c400_o80",
+ "chunks": 1134,
+ "chunk_size": 400,
+ "chunk_overlap": 80,
+ "reranker": "cross-encoder/ms-marco-MiniLM-L6-v2",
+ "reranker_revision": "233902d25c440f23af6f7d6e94d2946bac0bee0a",
+ "rerank_candidates": 20,
+ "provider": "llamacpp:qwen2.5-7b-instruct-q4_k_m",
+ "prompt": "v1",
+ "seed": 0,
+ "temperature": 0.3,
+ "labeled": "evals/dev_set.jsonl",
+ "n": 23,
+ "abstained": 0,
+ "latency": {
+  "embed": {
+   "n": 23,
+   "mean_ms": 66.7,
+   "p50_ms": 18.1,
+   "p95_ms": 331.8,
+   "max_ms": 450.9
+  },
+  "retrieve": {
+   "n": 23,
+   "mean_ms": 3.5,
+   "p50_ms": 2.2,
+   "p95_ms": 7.9,
+   "max_ms": 8.1
+  },
+  "rerank": {
+   "n": 23,
+   "mean_ms": 234.9,
+   "p50_ms": 143.5,
+   "p95_ms": 753.8,
+   "max_ms": 781.8
+  },
+  "generate": {
+   "n": 23,
+   "mean_ms": 14247.3,
+   "p50_ms": 13761.1,
+   "p95_ms": 19456.6,
+   "max_ms": 23625.4
+  },
+  "total": {
+   "n": 23,
+   "mean_ms": 14552.4,
+   "p50_ms": 13900.9,
+   "p95_ms": 20322.2,
+   "max_ms": 24291.2
+  }
+ }
+}
