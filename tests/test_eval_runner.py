@@ -48,3 +48,13 @@ def test_labeled_set_is_well_formed():
         assert r["answerable"] == bool(r["relevant_doc_ids"])
         if r["category"] == "multi":
             assert len(r["relevant_doc_ids"]) >= 2
+
+
+def test_gate_failures_include_faithfulness_and_missing_metrics():
+    from rag_production.eval_runner import GATES, gate_failures
+
+    assert GATES["faithfulness"] == 0.85 and GATES["recall_at_5"] == 0.70
+    ok = {"recall_at_5": 0.9, "hit_at_5": 0.9, "faithfulness": 0.9}
+    assert gate_failures(ok) == []
+    assert gate_failures({**ok, "faithfulness": 0.84}) == ["faithfulness"]
+    assert gate_failures({**ok, "faithfulness": None}) == ["faithfulness"]

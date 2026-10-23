@@ -1,7 +1,7 @@
 """Retrieval eval: Recall@5 and Hit@5 at document level over a labeled question set.
 
 Usage: DATABASE_URL=... python -m rag_production.eval_runner [--limit N] [--out reports/eval.json]
-Exits 1 if a gate fails. Faithfulness (NLI judge) is not implemented yet.
+Exits 1 if a gate fails. Faithfulness: local NLI judge over answerable, non-abstained questions.
 """
 
 import argparse
@@ -12,7 +12,7 @@ from pathlib import Path
 
 from rag_production.metrics import hit_at_k, recall_at_k
 
-GATES = {"recall_at_5": 0.70, "hit_at_5": 0.80}
+GATES = {"recall_at_5": 0.70, "hit_at_5": 0.80, "faithfulness": 0.85}
 
 
 def load_labeled_set(path: str | Path) -> list[dict]:
@@ -94,6 +94,30 @@ def evaluate(
     }
 
 
+def gate_failures(report: dict) -> list[str]:
+    """Metrics below their gate; a missing (None) metric fails its gate."""
+    return [m for m, g in GATES.items() if report.get(m) is None or report[m] < g]
+
+
+def _faithfulness(labeled, store, embedder, settings, args) -> dict:  # pragma: no cover
+    from rag_production.faithfulness import NLIJudge, evaluate_faithfulness
+
+    items = []
+    for row in labeled:
+        if not row["relevant_doc_ids"]:
+            continue
+        hits = store.search(embedder.embed([row["question"]])[0], k=5)
+        if not hits or hits[0].score < settings.abstain_threshold:
+            continue
+        items.append({"answer": hits[0].text, "contexts": [h.text for h in hits]})
+    if args.faithfulness_limit:
+        items = items[: args.faithfulness_limit]
+    judge = NLIJudge()
+    result = evaluate_faithfulness(items, judge)
+    result.update({"judge": judge.name, "answer_source": "extractive (top chunk verbatim)"})
+    return result
+
+
 def main(argv: list[str] | None = None) -> int:  # pragma: no cover - exercised in CI eval step
     from rag_production.config import load_settings
     from rag_production.embeddings import SentenceTransformerEmbedder
@@ -104,6 +128,7 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover - exercised 
     ap.add_argument("--labeled", default="evals/labeled_set.jsonl")
     ap.add_argument("--limit", type=int, default=0, help="evaluate only the first N questions")
     ap.add_argument("--out", default="reports/eval.json")
+    ap.add_argument("--faithfulness-limit", type=int, default=0, help="judge only N answers")
     args = ap.parse_args(argv)
 
     settings = load_settings()
@@ -124,8 +149,9 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover - exercised 
 
     report = evaluate(labeled, retrieve, k=5, abstain_threshold=settings.abstain_threshold)
     report.update({"model": embedder.name, "corpus": ingest, "gates": GATES, "top_k": k})
-    report["faithfulness"] = "not implemented yet (NLI judge planned)"
-    failed = [m for m, g in GATES.items() if report[m] < g]
+    report["faithfulness_eval"] = _faithfulness(labeled, store, embedder, settings, args)
+    report["faithfulness"] = report["faithfulness_eval"]["faithfulness"]
+    failed = gate_failures(report)
     report["passed"] = not failed
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(json.dumps(report, indent=2))

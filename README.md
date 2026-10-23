@@ -2,8 +2,8 @@
 
 ![Status: work in progress](https://img.shields.io/badge/status-work%20in%20progress-orange)
 
-> **Status: work in progress.** Week 1: retrieval pipeline and retrieval eval run in CI. Generation
-> (LLM providers) and the faithfulness judge are not built yet.
+> **Status: work in progress.** Retrieval pipeline, retrieval eval and NLI faithfulness gate run in
+> CI. Generation (LLM providers) is not built yet, so faithfulness currently scores the extractive answer.
 
 A production-style RAG API: FastAPI, Postgres + pgvector, local embeddings and
 quality evals gated in CI. Full requirements: [SPEC.md](SPEC.md) (AC1 to AC26).
@@ -54,7 +54,7 @@ CI gate: hit@5 >= 0.80, recall@5 >= 0.70 and faithfulness >= 0.85. Faithfulness 
 local NLI cross-encoder (`cross-encoder/nli-deberta-v3-small`), which is free and deterministic.
 An LLM judge runs only offline, and its score is reported here without gating.
 Retrieval numbers below are measured (`python -m rag_production.eval_runner`, full set, run in CI
-on every push). Faithfulness is **not implemented yet**.
+on every push).
 
 | Metric (answerable, n=47) | Measured (2026-10-22) | Gate |
 |---|---|---|
@@ -62,12 +62,14 @@ on every push). Faithfulness is **not implemented yet**.
 | recall@5 (doc level) | 0.961 (single 0.986, multi 0.889) | >= 0.70 (stretch 0.80) |
 | abstention on 10 unanswerable | 70% (3 near-domain answered wrongly) | reported, not gated |
 | false abstention on answerable | 0% | reported, not gated |
-| faithfulness | not implemented | >= 0.85 (planned) |
+| faithfulness (45 non-abstained answerable, extractive answer) | 0.993 (negative control 0.055) | >= 0.85 |
 
 Caveats: questions are hand-written (35 single-page, 12 multi-page, 10 unanswerable) and judged at
 document level against a 40-page corpus. Retrieval questions are still fairly easy; treat the
 numbers as a regression baseline. Abstention is a fixed top-1 cosine threshold (0.40), which is
-crude and misses near-domain questions. See [evals/README.md](evals/README.md).
+crude and misses near-domain questions. Faithfulness is measured on the **extractive** answer (the
+top chunk verbatim), so a high score is expected and only proves the judge works; it becomes
+meaningful once generated answers exist. See [evals/README.md](evals/README.md).
 
 ## Limitations
 - Corpus is 40 FastAPI tutorial pages (MIT); the eval set is small and easy (see Evals).
