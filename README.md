@@ -77,6 +77,7 @@ on every push).
 | faithfulness, CI: `mock` generated answers (47) | 1.000 (negative control 0.085) | >= 0.85 |
 | faithfulness, extractive answer (45; CI before providers, run 39877673255) | 0.993 (negative control 0.055) | same gate |
 | faithfulness, real LLM: Qwen2.5-7B-Instruct Q4_K_M, llama-cpp, local CPU (46) | **0.647** (negative control 0.150); generation p50 15.5 s, p95 29.7 s per query | fails 0.85; local only, not in CI |
+| same model, prompt v5 (chosen on dev, run once on test) vs v1 control, both after an env rebuild (47) | v5 **0.605** vs v1 0.588 (negative control 0.153 / 0.099) | fails 0.85; default prompt stays v1 |
 
 Caveats: questions are hand-written (35 single-page, 12 multi-page, 10 unanswerable) and judged at
 document level against a 40-page corpus. Retrieval questions are still fairly easy; treat the
@@ -85,7 +86,10 @@ crude and misses near-domain questions. Faithfulness is measured on the **extrac
 top chunk verbatim), so a high score is expected and only proves the judge works; it becomes
 meaningful once a real model is measured. The real model scores 0.647. Some of that is wrong
 claims and some is hedging or paraphrase the small judge does not credit (details in evals/README).
-The gate, prompt and judge were not changed after seeing it. The mock copies retrieved sentences, so its 1.000 only
+The gate, prompt and judge were not changed after seeing it. A failure taxonomy (rules fixed before use, 0.65
+agreement with a 20-answer agent hand audit, over-calls hallucination) puts the hallucination rate
+at most 0.46 for v1 and 0.43 for v5. A prompt change chosen on dev did not close the gap (details in
+[evals/README.md](evals/README.md#failure-taxonomy-and-prompt-v5-2026-10-2223-local-cpu)). The mock copies retrieved sentences, so its 1.000 only
 shows the generation path and judge are wired correctly; it says nothing about LLM quality. See [evals/README.md](evals/README.md).
 
 ## Limitations

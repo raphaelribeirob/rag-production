@@ -33,6 +33,8 @@ LLM = OWASP Top 10 for LLM Applications 2025; A = OWASP Top 10 (2021) for the HT
 | Corpus fetched over HTTPS from a pinned 40-char upstream commit, fixed page allow-list | LLM03 Supply Chain; LLM04 Data and Model Poisoning | `tests/test_repo_hardening.py::test_corpus_source_pinned_to_full_commit_and_https` |
 | `/query` abstains (empty answer, `abstained: true`) when top-1 similarity < `ABSTAIN_THRESHOLD` | LLM09 Misinformation (partial: 70% abstention on unanswerable eval set) | `tests/test_api.py::test_query_abstains_below_threshold` |
 | CI eval gate: NLI faithfulness >= 0.85 (sentences entailed by retrieved chunks); a missing score fails the gate | LLM09 Misinformation (partial: CI scores the deterministic mock's answers, not a real LLM) | `tests/test_eval_runner.py::test_gate_failures_include_faithfulness_and_missing_metrics`, `tests/test_faithfulness.py::test_real_nli_judge_entailment_vs_contradiction` |
+| Failure taxonomy of answers (supported / hallucination / evasive / paraphrase) with rules fixed before use; agreement with hand labels computed, not assumed | LLM09 (partial: offline measurement, not a runtime control; 0.65 agreement on 20 answers) | `tests/test_taxonomy.py::test_sentence_rules_in_order`, `tests/test_taxonomy.py::test_answer_label_priority_and_score`, `tests/test_taxonomy.py::test_agreement_with_hand_labels` |
+| Dev/test question splits frozen by sha256, so prompt tuning cannot silently use test | LLM09 (eval integrity) | `tests/test_eval_splits.py::test_split_hashes_match_frozen_files` |
 | Ollama provider only talks to `http://localhost` (no data sent to remote hosts, no spend) | LLM02; LLM10 (cost); A10 SSRF (partial: provider URL only) | `tests/test_providers.py::test_ollama_only_talks_to_localhost`, `tests/test_providers.py::test_ollama_settings_from_env_still_localhost_only` |
 | Generation is deterministic and context-only by instruction (temperature 0, seed 0, "only the context" prompt) | LLM09 (partial: instruction, not enforcement) | `tests/test_providers.py::test_ollama_request_is_local_deterministic_and_context_only` |
 | llama-cpp provider runs in-process from a local model file only (no network, no spend); fails closed if `LLAMACPP_MODEL_PATH` is empty | LLM02; LLM10 (cost); A05 | `tests/test_providers.py::test_llamacpp_selected_by_settings_and_requires_model_path` |
@@ -47,8 +49,9 @@ LLM = OWASP Top 10 for LLM Applications 2025; A = OWASP Top 10 (2021) for the HT
 - LLM01 Prompt Injection (incl. indirect via retrieved docs): the Ollama and llama-cpp providers put retrieved
   chunks into the prompt with no injection defense or test; planned adversarial eval (SPEC AC26).
 - LLM05 Improper Output Handling, LLM07 System Prompt Leakage, LLM09 for real LLM output
-  (measured once locally, Qwen2.5-7B Q4_K_M via llama-cpp: faithfulness 0.647, **below** the 0.85
-  gate; not gated in CI, which gates the mock only), LLM06 Excessive Agency
+  (measured locally, Qwen2.5-7B Q4_K_M via llama-cpp: faithfulness 0.647 baseline, 0.605 with
+  prompt v5 after an env rebuild, all **below** the 0.85 gate; not gated in CI, which gates the
+  mock only; no runtime check blocks an unsupported sentence), LLM06 Excessive Agency
   (design has no tools; nothing to test yet).
 - LLM08 beyond dimension checks: access control per document/tenant, embedding inversion.
 - LLM10 rate limiting, request body size limits at the server, timeouts.

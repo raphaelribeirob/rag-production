@@ -111,7 +111,8 @@ python -m rag_production.eval_runner --out reports/eval_llamacpp_qwen2.5-7b.json
 Reading the low-scoring answers (no tuning was done after seeing them):
 - Some answers are wrong: for example, the custom-header answer invents `header.user_agent`, and
   the UUID/Decimal answer says Decimals "would typically be represented as floats", which is not in
-  the context. These are real unsupported claims.
+  the retrieved chunks (the full page does say Decimal is handled like float, but that chunk was not
+  retrieved). Unsupported by the context either way.
 - Some are hedges or non-answers ("the context does not provide specific details..."). The judge
   counts these as unsupported. That is arguably right for a grounded system, but it is not a
   hallucination of facts.
@@ -127,3 +128,59 @@ was not worked around. Route (b), `llama-cpp-python` plus the official Qwen GGUF
 
 Abstention threshold: left at 0.40 on purpose. It was not tuned on the test set, and no dev split
 was made, so the test-set abstention numbers above are unchanged.
+
+## Failure taxonomy and prompt v5 (2026-10-22/23, local CPU)
+Same model, runtime and judge as above. Not in CI. Gate (0.85), CI judge and threshold (0.40) unchanged.
+
+**Classifier** (`src/rag_production/taxonomy.py`, rules frozen in c7d79a1 before use, tested in
+`tests/test_taxonomy.py`). Per sentence, first match wins: entailment >= 0.5 supported; refusal
+phrase is evasive if a gold page is in the top 5, else justified refusal; contradiction >= 0.5
+hallucination; a code identifier not in the context hallucination; content-token overlap >= 0.75
+paraphrase; else hallucination. Answer label = worst sentence.
+
+**Hand audit** (`evals/audit/hand_labels_before.json`): 20 BEFORE answers labeled blind by the agent
+(Grok Bot), not by a human. Classifier agreement 13/20 = **0.65** (also 0.65 on 3 classes). 5 answers
+labeled grounded were called hallucination (paraphrases the small judge does not entail), 1 evasive
+was called hallucination, 1 hallucination was called supported. So the classifier over-calls
+hallucination; treat its hallucination rate as an upper bound.
+
+**Splits**: `evals/SPLITS.md` freezes the dev (23 answerable) and test files by sha256
+(`tests/test_eval_splits.py`). Prompts were iterated on dev only (`evals/results/dev/DECISION.md`):
+citation prompts v2/v3 failed (the unchanged judge cannot score sentences ending in "[n]"), v4 0.70,
+v5 0.83, v1 0.86. v5 was picked as the single test candidate before any new-prompt test run, and run
+on test **once**.
+
+**Environment drift**: the box was restored mid-task and llama-cpp-python was rebuilt from source.
+The same v1 prompt on test then scored 0.588 instead of 0.647, so a v1 control was rerun on the
+rebuilt env. The fair BEFORE vs AFTER pair is v1-rebuilt vs v5 (same build). Re-scoring the
+committed BEFORE answers reproduced 0.6467 and identical labels, so the judge did not drift; the generator did.
+
+| test (47 answerable) | BEFORE v1 (pre-restore) | v1 control (rebuilt) | AFTER v5 (rebuilt) |
+|---|---|---|---|
+| faithfulness (gate 0.85) | 0.647 (n=46) | 0.588 | **0.605** |
+| negative control | 0.150 | 0.099 | 0.153 |
+| supported | 0.457 | 0.383 | 0.447 |
+| hallucination (upper bound) | 0.457 | 0.468 | 0.426 |
+| evasive refusal | 0.000 | 0.021 | 0.021 |
+| unrecognized paraphrase | 0.087 | 0.128 | 0.106 |
+| recall@5 / hit@5 | 0.961 / 1.00 | 0.961 / 1.00 | 0.961 / 1.00 |
+| latency mean / p50 / p95 / max (s) | 17.3 / 15.5 / 29.7 / 39.0 | 21.1 / 17.1 / 42.1 / 99.7 | 17.3 / 15.4 / 33.6 / 53.2 |
+
+v5 beats the same-build control by 0.017 faithfulness but is below the original 0.647 and far below
+0.85. With 47 questions and a 0.65-agreement classifier that gap is within noise. **Default prompt
+stays v1.** Latency on the v1 control was likely inflated by other jobs on the box.
+
+Files: `evals/results/2026-10-22_test_eval_{v1_rebuilt,v5}.json`,
+`evals/results/2026-10-22_taxonomy_{before_v1,test_v1_rebuilt,after_v5}.json`.
+Commands (`M` = GGUF path above):
+```bash
+LLM_PROVIDER=llamacpp LLAMACPP_MODEL_PATH=$M LLM_PROMPT=v5 PYTHONPATH=src \
+  python -m rag_production.eval_runner --out reports/test_v5.json --save-answers reports/test_answers_v5.json
+PYTHONPATH=src python tools/taxonomy_report.py --answers reports/test_answers_v5.json \
+  --judge cross-encoder/nli-deberta-v3-small --out evals/results/2026-10-22_taxonomy_after_v5.json
+# BEFORE raw answers were lost in the restore: re-pair committed answers with re-retrieved contexts
+PYTHONPATH=src python tools/taxonomy_report.py --rebuild \
+  --answers evals/results/2026-10-22_taxonomy_before_v1.json --hand evals/audit/hand_labels_before.json \
+  --judge cross-encoder/nli-deberta-v3-small --out reports/rebuild_check_small.json
+```
+Dev runs use `--labeled evals/dev_set.jsonl` (see `evals/results/dev/DECISION.md`).
