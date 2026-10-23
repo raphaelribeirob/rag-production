@@ -1,6 +1,7 @@
 # Evals
 
-Status: retrieval eval and NLI faithfulness are implemented and gated in CI.
+Status: retrieval eval and NLI faithfulness are implemented and gated in CI (CI scores the mock).
+A real local LLM (Qwen2.5-7B-Instruct Q4_K_M) was measured once on the dev box: faithfulness 0.647.
 
 ## Metrics
 | Metric | Definition | CI gate |
@@ -65,7 +66,7 @@ Measured 2026-10-22 (answerable, non-abstained questions):
 |---|---|---|---|---|
 | generated (mock) | 47 | 1.000 | 0.085 | CI + local |
 | extractive (top chunk) | 45 | 0.993 | 0.055 | local (CI before the providers step) |
-| generated (ollama:qwen2.5:7b) | - | not measured | - | Ollama not run |
+| generated (llamacpp: Qwen2.5-7B-Instruct Q4_K_M) | 46 | **0.647** (fails 0.85) | 0.150 | local only, see below |
 
 n differs because 2 top chunks have no prose sentence the judge scores (code or lists only).
 - Mock fix, disclosed: the first mock run scored **0.830**. The mock copied lead-in sentences
@@ -77,4 +78,52 @@ n differs because 2 top chunks have no prose sentence the judge scores (code or 
   a multi-sentence premise that contains it (e.g. 0.45 against a 2-sentence premise vs 0.99 alone).
   That is a measurement bug, so sentence-level premises were added. The gate was not changed.
 - Caveat: extractive and mock answers are copied from the context, so high scores are expected.
-  They check the judge and the code path, not a generator. A real number needs Ollama.
+  They check the judge and the code path, not a generator. The real-model number is below.
+
+## Real LLM faithfulness (local, 2026-10-22)
+Measured on the dev box only. **Not run in CI and not gated in CI** (CI still gates the mock).
+
+| Field | Value |
+|---|---|
+| Model | `Qwen/Qwen2.5-7B-Instruct-GGUF`, file `qwen2.5-7b-instruct-q4_k_m` (2 shards), **Q4_K_M** |
+| Runtime | `llama-cpp-python` 0.3.36, in-process, CPU only (8 vCPU Xeon, 15 GB RAM), `n_ctx` 4096, temperature 0, seed 0, `max_tokens` 200 |
+| Integrity | both shards' sha256 checked against the Hugging Face LFS hashes before loading |
+| Faithfulness (answerable, non-abstained, n=46 scored) | **0.647**: below the 0.85 gate; the run exits 1 |
+| Negative control | 0.150 |
+| Per answer | 21 of 46 fully supported, 7 scored 0, 18 partly supported |
+| Generation latency per query (n=47) | mean 17.3 s, p50 15.5 s, p95 29.7 s, max 39.0 s |
+| Whole run (retrieval, generation, NLI) | 16 min 12 s wall clock |
+| Retrieval (same run) | hit@5 1.00, recall@5 0.961, abstention unchanged (70% unanswerable, 12.3% overall) |
+
+Faithfulness covers the 47 answerable questions, as in CI. 7B was fast enough for them, so 3B
+and 1.5B were not needed. One answer has no sentence the judge scores (n=46).
+
+Exact command (summary JSON committed as
+`evals/results/2026-10-22_llamacpp_qwen2.5-7b-instruct-q4_k_m.json`):
+```bash
+pip install -e ".[local-llm]"   # llama-cpp-python; optional, never installed in CI
+LLM_PROVIDER=llamacpp \
+LLAMACPP_MODEL_PATH=/home/box/models/qwen2.5-7b-instruct-q4_k_m-00001-of-00002.gguf \
+python -m rag_production.eval_runner --out reports/eval_llamacpp_qwen2.5-7b.json \
+  --save-answers reports/answers_llamacpp_qwen2.5-7b.json
+```
+
+Reading the low-scoring answers (no tuning was done after seeing them):
+- Some answers are wrong: for example, the custom-header answer invents `header.user_agent`, and
+  the UUID/Decimal answer says Decimals "would typically be represented as floats", which is not in
+  the context. These are real unsupported claims.
+- Some are hedges or non-answers ("the context does not provide specific details..."). The judge
+  counts these as unsupported. That is arguably right for a grounded system, but it is not a
+  hallucination of facts.
+- Answers that paraphrase or join facts from several chunks score lower than verbatim copies,
+  because the small NLI judge checks each sentence against one premise unit at a time.
+So 0.647 mixes real errors, hedges and judge limits. It is not a pure hallucination rate. The prompt, judge and gate were **not** changed in response to this number.
+
+How the model was obtained: route (a), the official Ollama Linux binary from GitHub Releases, was
+downloaded and its published sha256 verified. But `ollama pull` was refused on this box with
+`redirect target not allowed: <bucket>.r2.cloudflarestorage.com resolves to non-public 198.18.0.1`
+(the box's DNS maps the model CDN to a non-public address and Ollama's guard refuses it). That
+was not worked around. Route (b), `llama-cpp-python` plus the official Qwen GGUF, was used instead.
+
+Abstention threshold: left at 0.40 on purpose. It was not tuned on the test set, and no dev split
+was made, so the test-set abstention numbers above are unchanged.

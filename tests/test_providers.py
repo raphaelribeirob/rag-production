@@ -69,3 +69,35 @@ def test_ollama_settings_from_env_still_localhost_only():
         get_provider(load_settings(env))
     env = {"LLM_PROVIDER": "ollama", "OLLAMA_MODEL": "llama3.2:3b"}
     assert get_provider(load_settings(env)).name == "ollama:llama3.2:3b"
+
+
+class FakeLlama:
+    def __init__(self):
+        self.calls = []
+
+    def create_chat_completion(self, **kw):
+        self.calls.append(kw)
+        return {"choices": [{"message": {"content": "  Path params go\n in the URL.  "}}]}
+
+
+def test_llamacpp_in_process_deterministic_context_only():
+    from rag_production.providers import LlamaCppProvider
+
+    fake = FakeLlama()
+    p = LlamaCppProvider("/models/qwen2.5-7b-instruct-q4_k_m-00001-of-00002.gguf", llm=fake)
+    assert p.generate("What are path params?", CTX) == "Path params go in the URL."
+    kw = fake.calls[0]
+    assert kw["temperature"] == 0 and kw["seed"] == 0 and kw["max_tokens"] <= 256
+    prompt = kw["messages"][-1]["content"]
+    assert "only" in prompt.lower() and CTX[1] in prompt
+    assert p.name == "llamacpp:qwen2.5-7b-instruct-q4_k_m" and p.cost_usd == 0.0
+
+
+def test_llamacpp_selected_by_settings_and_requires_model_path():
+    from rag_production.providers import LlamaCppProvider
+
+    with pytest.raises(ValueError):
+        get_provider(load_settings({"LLM_PROVIDER": "llamacpp"}))
+    env = {"LLM_PROVIDER": "llamacpp", "LLAMACPP_MODEL_PATH": "/m/x.gguf"}
+    p = get_provider(load_settings(env), llm=FakeLlama())
+    assert isinstance(p, LlamaCppProvider)

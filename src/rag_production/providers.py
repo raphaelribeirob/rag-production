@@ -3,9 +3,11 @@
 - MockProvider: deterministic, used in CI. Copies the first full prose sentence of the top 2 chunks.
   It tests the generation code path, not answer quality.
 - OllamaProvider: local Ollama (default qwen2.5:7b), optional, never used in CI. Localhost only.
+- LlamaCppProvider: in-process llama.cpp on a local GGUF file, optional, never used in CI.
 """
 
 import json
+import os
 import re
 import urllib.request
 from collections.abc import Callable, Sequence
@@ -82,11 +84,41 @@ class OllamaProvider:
         return re.sub(r"\s+", " ", out.get("response", "")).strip()
 
 
-def get_provider(settings) -> LLMProvider | None:
+class LlamaCppProvider:
+    """In-process generation (no server, no network) with llama-cpp-python (optional extra)."""
+
+    cost_usd = 0.0
+
+    def __init__(self, model_path: str, n_ctx: int = 4096, max_tokens: int = 200, llm=None):
+        base = re.sub(r"(-\d{5}-of-\d{5})?\.gguf$", "", os.path.basename(model_path))
+        self.name = f"llamacpp:{base}"
+        self.max_tokens = max_tokens
+        if llm is None:  # pragma: no cover - needs the optional package and a model file
+            from llama_cpp import Llama
+
+            llm = Llama(model_path=model_path, n_ctx=n_ctx, seed=0, verbose=False)
+        self._llm = llm
+
+    def generate(self, question: str, contexts: Sequence[str]) -> str:
+        prompt = PROMPT.format(context="\n\n---\n\n".join(contexts), question=question)
+        out = self._llm.create_chat_completion(
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0,
+            seed=0,
+            max_tokens=self.max_tokens,
+        )
+        return re.sub(r"\s+", " ", out["choices"][0]["message"]["content"] or "").strip()
+
+
+def get_provider(settings, llm=None) -> LLMProvider | None:
     if settings.llm_provider == "extractive":
         return None
     if settings.llm_provider == "mock":
         return MockProvider()
     if settings.llm_provider == "ollama":
         return OllamaProvider(model=settings.ollama_model, base_url=settings.ollama_url)
+    if settings.llm_provider == "llamacpp":
+        if not settings.llamacpp_model_path:
+            raise ValueError("LLM_PROVIDER=llamacpp needs LLAMACPP_MODEL_PATH (a local .gguf file)")
+        return LlamaCppProvider(settings.llamacpp_model_path, llm=llm)
     raise NotImplementedError(f"provider {settings.llm_provider!r} is not implemented")

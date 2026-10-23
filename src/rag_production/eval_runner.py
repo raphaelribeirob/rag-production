@@ -7,8 +7,11 @@ Exits 1 if a gate fails. Faithfulness: local NLI judge over answerable, non-abst
 import argparse
 import json
 import sys
+import time
 from collections.abc import Callable
 from pathlib import Path
+
+import numpy as np
 
 from rag_production.metrics import hit_at_k, recall_at_k
 
@@ -99,6 +102,20 @@ def gate_failures(report: dict) -> list[str]:
     return [m for m, g in GATES.items() if report.get(m) is None or report[m] < g]
 
 
+def latency_summary(ms: list[float]) -> dict | None:
+    """Mean / p50 / p95 / max of per-query latencies (linear interpolation)."""
+    if not ms:
+        return None
+    a = np.asarray(ms, dtype=float)
+    return {
+        "n": len(ms),
+        "mean_ms": round(float(a.mean()), 1),
+        "p50_ms": round(float(np.percentile(a, 50)), 1),
+        "p95_ms": round(float(np.percentile(a, 95)), 1),
+        "max_ms": round(float(a.max()), 1),
+    }
+
+
 def answer_for(question: str, texts: list[str], provider) -> tuple[str, str]:
     """Generated answer when a provider exists, else the extractive answer (top chunk)."""
     if provider is None:
@@ -111,7 +128,7 @@ def _faithfulness(labeled, store, embedder, settings, args) -> dict:  # pragma: 
     from rag_production.providers import get_provider
 
     provider = get_provider(settings)
-    items, source = [], "none"
+    items, source, gen_ms = [], "none", []
     for row in labeled:
         if not row["relevant_doc_ids"]:
             continue
@@ -121,11 +138,16 @@ def _faithfulness(labeled, store, embedder, settings, args) -> dict:  # pragma: 
         if args.faithfulness_limit and len(items) >= args.faithfulness_limit:
             break
         texts = [h.text for h in hits]
+        t0 = time.perf_counter()
         answer, source = answer_for(row["question"], texts, provider)
+        gen_ms.append((time.perf_counter() - t0) * 1000)
         items.append({"answer": answer, "contexts": texts})
     judge = NLIJudge()
     result = evaluate_faithfulness(items, judge)
     result.update({"judge": judge.name, "answer_source": source})
+    result["answer_latency"] = latency_summary(gen_ms)  # generation only (0 for extractive)
+    if args.save_answers:
+        Path(args.save_answers).write_text(json.dumps(items, indent=1))
     return result
 
 
@@ -140,6 +162,7 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover - exercised 
     ap.add_argument("--limit", type=int, default=0, help="evaluate only the first N questions")
     ap.add_argument("--out", default="reports/eval.json")
     ap.add_argument("--faithfulness-limit", type=int, default=0, help="judge only N answers")
+    ap.add_argument("--save-answers", default="", help="write judged answers + contexts (JSON)")
     args = ap.parse_args(argv)
 
     settings = load_settings()

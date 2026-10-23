@@ -18,6 +18,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.6", "httpx>=0.27"]
+# optional, local only, never installed in CI: in-process generation from a GGUF file
+local-llm = ["llama-cpp-python>=0.3"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

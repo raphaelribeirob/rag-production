@@ -35,6 +35,8 @@ LLM = OWASP Top 10 for LLM Applications 2025; A = OWASP Top 10 (2021) for the HT
 | CI eval gate: NLI faithfulness >= 0.85 (sentences entailed by retrieved chunks); a missing score fails the gate | LLM09 Misinformation (partial: CI scores the deterministic mock's answers, not a real LLM) | `tests/test_eval_runner.py::test_gate_failures_include_faithfulness_and_missing_metrics`, `tests/test_faithfulness.py::test_real_nli_judge_entailment_vs_contradiction` |
 | Ollama provider only talks to `http://localhost` (no data sent to remote hosts, no spend) | LLM02; LLM10 (cost); A10 SSRF (partial: provider URL only) | `tests/test_providers.py::test_ollama_only_talks_to_localhost`, `tests/test_providers.py::test_ollama_settings_from_env_still_localhost_only` |
 | Generation is deterministic and context-only by instruction (temperature 0, seed 0, "only the context" prompt) | LLM09 (partial: instruction, not enforcement) | `tests/test_providers.py::test_ollama_request_is_local_deterministic_and_context_only` |
+| llama-cpp provider runs in-process from a local model file only (no network, no spend); fails closed if `LLAMACPP_MODEL_PATH` is empty | LLM02; LLM10 (cost); A05 | `tests/test_providers.py::test_llamacpp_selected_by_settings_and_requires_model_path` |
+| llama-cpp generation is deterministic and context-only by instruction (temperature 0, seed 0) | LLM09 (partial: instruction, not enforcement) | `tests/test_providers.py::test_llamacpp_in_process_deterministic_context_only` |
 | No hosted provider: `hosted_free` raises `NotImplementedError` | LLM10 (cost); A05 | `tests/test_providers.py::test_get_provider_by_setting` |
 | GitHub Actions pinned by full commit SHA | LLM03 Supply Chain; A08 Software and Data Integrity Failures | `tests/test_repo_hardening.py::test_actions_pinned_by_full_sha` |
 | CI token read-only, `persist-credentials: false` | A08; A05 | `tests/test_repo_hardening.py::test_workflow_token_is_read_only` |
@@ -42,15 +44,18 @@ LLM = OWASP Top 10 for LLM Applications 2025; A = OWASP Top 10 (2021) for the HT
 | `.env` is gitignored | LLM02 | `tests/test_repo_hardening.py::test_dotenv_is_gitignored` |
 
 ## Not covered yet (no test, so not claimed)
-- LLM01 Prompt Injection (incl. indirect via retrieved docs): the Ollama provider puts retrieved
+- LLM01 Prompt Injection (incl. indirect via retrieved docs): the Ollama and llama-cpp providers put retrieved
   chunks into the prompt with no injection defense or test; planned adversarial eval (SPEC AC26).
 - LLM05 Improper Output Handling, LLM07 System Prompt Leakage, LLM09 for real LLM output
-  (Ollama answers are not measured or gated; CI gates the mock only), LLM06 Excessive Agency
+  (measured once locally, Qwen2.5-7B Q4_K_M via llama-cpp: faithfulness 0.647, **below** the 0.85
+  gate; not gated in CI, which gates the mock only), LLM06 Excessive Agency
   (design has no tools; nothing to test yet).
 - LLM08 beyond dimension checks: access control per document/tenant, embedding inversion.
 - LLM10 rate limiting, request body size limits at the server, timeouts.
 - A07 brute force / rate limiting on `/ingest`; `/query` and `/health` are unauthenticated by design (v1).
 - Embedding model integrity: weights downloaded from Hugging Face by name, not pinned by revision/hash.
+- Local GGUF integrity: sha256 was checked by hand for the measured run (evals/README); the code
+  does not verify the model file.
 - A02 TLS to the DB: Neon requires `sslmode=require` (documented in README), not enforced in code.
 - A04 Insecure Design threat model, A06 Vulnerable Components (`pip-audit` not run), A10 SSRF
   beyond the localhost-only Ollama URL check.

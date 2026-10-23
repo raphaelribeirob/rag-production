@@ -69,3 +69,11 @@ def test_faithfulness_answer_is_generated_when_provider_exists_else_extractive()
     ans, source = answer_for("q", texts, MockProvider())
     assert ans == "First chunk sentence here. Second chunk sentence here."
     assert source == "generated (mock)"
+
+
+def test_latency_summary():
+    from rag_production.eval_runner import latency_summary
+
+    s = latency_summary([100.0, 200.0, 300.0, 400.0])
+    assert s == {"n": 4, "mean_ms": 250.0, "p50_ms": 250.0, "p95_ms": 385.0, "max_ms": 400.0}
+    assert latency_summary([]) is None

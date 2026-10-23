@@ -3,8 +3,11 @@
 ![Status: work in progress](https://img.shields.io/badge/status-work%20in%20progress-orange)
 
 > **Status: work in progress.** Retrieval, retrieval eval and the NLI faithfulness gate run in CI.
-> Providers: `extractive` (default), deterministic `mock` (used by the CI eval) and local `ollama`
-> (optional, never run in CI, not yet measured). CI faithfulness scores the **mock's** answers.
+> Providers: `extractive` (default), deterministic `mock` (used by the CI eval), local `ollama` and
+> in-process `llamacpp` (both optional, never run in CI). CI faithfulness scores the **mock's** answers.
+> A real model (Qwen2.5-7B-Instruct Q4_K_M via llama-cpp, local CPU) scored **0.647 faithfulness,
+> below the 0.85 gate** (measured once on 2026-10-22, not in CI).
+> See [evals/README.md](evals/README.md#real-llm-faithfulness-local-2026-10-22).
 
 A production-style RAG API: FastAPI, Postgres + pgvector, local embeddings and
 quality evals gated in CI. Full requirements: [SPEC.md](SPEC.md) (AC1 to AC26).
@@ -36,15 +39,18 @@ curl -X POST localhost:8000/query -H 'content-type: application/json' \
 `/query` returns `answer`, `answer_source` (`extractive` = best chunk verbatim, or `generated`),
 `abstained`, `citations` (`chunk_id`, `doc_id`, `score`), `latency_ms` (`embed`, `retrieve`,
 `generate` when a provider runs, `total`), `cost_usd` (always 0.0: local only) and `provider`.
-Local generation (optional, $0, no account): install Ollama, `ollama pull qwen2.5:7b`, then start
-the API with `LLM_PROVIDER=ollama`. Only `http://localhost` Ollama URLs are accepted.
+Local generation (optional, $0, no account), either:
+- `pip install -e ".[local-llm]"`, download a GGUF from the official `Qwen/Qwen2.5-7B-Instruct-GGUF`
+  repo (Q4_K_M; check its sha256), then `LLM_PROVIDER=llamacpp LLAMACPP_MODEL_PATH=/path/to/file.gguf`.
+  The model runs in-process; nothing leaves the machine.
+- or Ollama: `ollama pull qwen2.5:7b`, then `LLM_PROVIDER=ollama` (only `http://localhost` URLs).
 TODO: terminal recording.
 
 ## Architecture
 Ingest (load, heading-aware chunking, sentence-transformers embeddings) -> Postgres/pgvector (HNSW,
 cosine) -> FastAPI `/query` (embed, retrieve top-k, build prompt with citations) -> LLM provider
-chosen by `LLM_PROVIDER` behind a Protocol: `extractive` (no model), `mock` (deterministic, CI)
-or `ollama` (local). `hosted_free` is reserved and raises `NotImplementedError`. Telemetry: structlog JSON, OpenTelemetry spans, `query_log` table.
+chosen by `LLM_PROVIDER` behind a Protocol: `extractive` (no model), `mock` (deterministic, CI),
+`ollama` (localhost) or `llamacpp` (in-process GGUF). `hosted_free` is reserved and raises `NotImplementedError`. Telemetry: structlog JSON, OpenTelemetry spans, `query_log` table.
 Diagram: see SPEC.md. Built so far: chunking, embeddings, pgvector store, `/ingest`, `/query`
 (retrieval + extractive or generated answer), providers. Not built: prompt-injection defenses,
 telemetry, `query_log`.
@@ -52,7 +58,7 @@ telemetry, `query_log`.
 ## Tests
 `pip install -e ".[dev]" && pytest -q` (needs the local Postgres above). Covers chunking,
 embeddings, store, ingest idempotency, API contract (auth, input limits), providers (mock,
-Ollama via a fake transport; no network) and the eval runner.
+Ollama via a fake transport, llama-cpp via a fake model; no network, no model download) and the eval runner.
 
 ## Evals
 Hit rate@5, recall@5 and faithfulness on a hand-labeled set built from the FastAPI docs.
@@ -70,20 +76,23 @@ on every push).
 | false abstention on answerable | 0% | reported, not gated |
 | faithfulness, CI: `mock` generated answers (47) | 1.000 (negative control 0.085) | >= 0.85 |
 | faithfulness, extractive answer (45; CI before providers, run 39877673255) | 0.993 (negative control 0.055) | same gate |
-| faithfulness, Ollama qwen2.5:7b | not measured (Ollama not run yet) | - |
+| faithfulness, real LLM: Qwen2.5-7B-Instruct Q4_K_M, llama-cpp, local CPU (46) | **0.647** (negative control 0.150); generation p50 15.5 s, p95 29.7 s per query | fails 0.85; local only, not in CI |
 
 Caveats: questions are hand-written (35 single-page, 12 multi-page, 10 unanswerable) and judged at
 document level against a 40-page corpus. Retrieval questions are still fairly easy; treat the
 numbers as a regression baseline. Abstention is a fixed top-1 cosine threshold (0.40), which is
 crude and misses near-domain questions. Faithfulness is measured on the **extractive** answer (the
 top chunk verbatim), so a high score is expected and only proves the judge works; it becomes
-meaningful once a real model is measured. The mock copies retrieved sentences, so its 1.000 only
+meaningful once a real model is measured. The real model scores 0.647. Some of that is wrong
+claims and some is hedging or paraphrase the small judge does not credit (details in evals/README).
+The gate, prompt and judge were not changed after seeing it. The mock copies retrieved sentences, so its 1.000 only
 shows the generation path and judge are wired correctly; it says nothing about LLM quality. See [evals/README.md](evals/README.md).
 
 ## Limitations
 - Corpus is 40 FastAPI tutorial pages (MIT); the eval set is small and easy (see Evals).
 - Single tenant, no UI. `/ingest` requires `API_KEY` and fails closed when it is unset. Other endpoints have no auth in v1.
-- Small local models: the extractive fallback gives safe but plain answers.
+- Small local models: the extractive fallback gives safe but plain answers. A local 7B model is
+  slow on CPU (about 15 s per answer) and only 0.647 faithful by the NLI judge.
 - Langfuse dashboards are a separate deliverable (due 2026-12-15).
 
 ## Attribution
